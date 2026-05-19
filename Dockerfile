@@ -2,17 +2,11 @@
 FROM mcr.microsoft.com/dotnet/sdk:9.0 AS build
 WORKDIR /src
 
-# Copiar archivos de proyecto
 COPY Biblioteca/SistemaAcademico.csproj Biblioteca/
 COPY Front/Front.csproj Front/
-
-# Restaurar dependencias
 RUN dotnet restore Front/Front.csproj
 
-# Copiar todo el código
 COPY . .
-
-# Publicar la app
 RUN dotnet publish Front/Front.csproj -c Release -o /app/publish
 
 # Etapa 2: Runtime
@@ -21,9 +15,7 @@ WORKDIR /app
 
 COPY --from=build /app/publish .
 
-ENV ASPNETCORE_URLS=http://0.0.0.0:$PORT
-ENV ASPNETCORE_ENVIRONMENT=Production
-
 EXPOSE 8080
 
-ENTRYPOINT ["dotnet", "Front.dll"]
+# CMD en shell form para que $PORT se expanda en tiempo de ejecucion
+CMD dotnet Front.dll --urls "http://0.0.0.0:${PORT:-8080}"
