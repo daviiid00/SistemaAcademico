@@ -188,6 +188,11 @@ namespace Front.Services
             string   area,
             DateTime fechaNacimiento)
         {
+            return RegistrarDocente(id, nombre, area, fechaNacimiento, new List<string> { "Maestría" });
+        }
+
+        public Result<bool> RegistrarDocente(string id, string nombre, string area, DateTime fechaNacimiento, List<string> titulos)
+        {
             try
             {
                 var nombreVal = ValidadorAcademico.ValidarNombreSoloLetras(nombre);
@@ -195,7 +200,7 @@ namespace Front.Services
                     return Result<bool>.Fail(nombreVal.mensaje, false);
 
                 var doc = new Docente(id, nombre, fechaNacimiento, "", "",
-                    id, area, area, 5_000_000, true, new List<string> { "Maestría" }, area);
+                    id, area, area, 5_000_000, true, titulos ?? new List<string>(), area);
                 _docenteService.AdicionarPersona(doc);
                 return Result<bool>.Ok(true, "Docente registrado.");
             }
@@ -220,10 +225,13 @@ namespace Front.Services
             => _asignaturaService.ObtenerTodas().Select(AsignaturaViewModel.FromDomain).ToList();
 
         public Result<bool> RegistrarAsignatura(string codigo, string nombre, string area, string idDocente)
+            => RegistrarAsignatura(codigo, nombre, area, idDocente, 3, "Primero");
+
+        public Result<bool> RegistrarAsignatura(string codigo, string nombre, string area, string idDocente, int creditos, string grado)
         {
             try
             {
-                var asig = new Asignatura(codigo, nombre, 3, area, 3, 1, "Primero", new List<Docente>());
+                var asig = new Asignatura(codigo, nombre, creditos, area, creditos, 0, grado, new List<Docente>());
                 var docenteRes = _docenteService.ObtenerPersona(idDocente);
                 if (docenteRes.Success && docenteRes.Data is Docente doc)
                     asig.DocentesAsignados.Add(doc);

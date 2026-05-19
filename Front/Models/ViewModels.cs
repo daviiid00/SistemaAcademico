@@ -153,6 +153,7 @@ namespace Front.Models
         public string       Nombre          { get; set; } = "";
         public string       Grado           { get; set; } = "";
         public int          Creditos        { get; set; }
+        public string       Area            { get; set; } = "";
         public List<string> NombresDocentes { get; set; } = new();
 
         public static AsignaturaViewModel FromDomain(Asignatura a) => new()
@@ -161,6 +162,7 @@ namespace Front.Models
             Nombre          = a.Nombre,
             Grado           = a.Grado,
             Creditos        = a.Creditos,
+            Area            = a.Departamento,
             NombresDocentes = a.DocentesAsignados?.Select(d => d.Nombre).ToList() ?? new()
         };
     }

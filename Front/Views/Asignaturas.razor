@@ -39,6 +39,25 @@
                         <label class="form-label">Área <span style="color:#94a3b8;font-size:0.75rem;">(solo letras)</span></label>
                         <input class="form-control" @bind="Form.Area" placeholder="Ej. Sistemas" />
                     </div>
+                    <div class="form-group">
+                        <label class="form-label">Créditos</label>
+                        <input class="form-control" type="number" min="1" max="10" @bind="Form.Creditos" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Grado / Semestre</label>
+                        <select class="form-control form-select" @bind="Form.Grado">
+                            <option value="Primero">Primero</option>
+                            <option value="Segundo">Segundo</option>
+                            <option value="Tercero">Tercero</option>
+                            <option value="Cuarto">Cuarto</option>
+                            <option value="Quinto">Quinto</option>
+                            <option value="Sexto">Sexto</option>
+                            <option value="Séptimo">Séptimo</option>
+                            <option value="Octavo">Octavo</option>
+                            <option value="Noveno">Noveno</option>
+                            <option value="Décimo">Décimo</option>
+                        </select>
+                    </div>
                     <div class="form-group" style="grid-column: span 2;">
                         <label class="form-label">Nombre de Asignatura <span style="color:#94a3b8;font-size:0.75rem;">(solo letras)</span></label>
                         <input class="form-control" @bind="Form.Nombre" placeholder="Ej. Lenguajes Formales" />
@@ -80,6 +99,7 @@
                     <tr>
                         <th>Código</th>
                         <th>Nombre</th>
+                        <th>Área</th>
                         <th>Grado</th>
                         <th>Créditos</th>
                         <th>Docentes</th>
@@ -92,6 +112,7 @@
                         <tr>
                             <td><span class="badge badge-gray">@asig.Codigo</span></td>
                             <td style="font-weight:600; color:#1e293b;">@asig.Nombre</td>
+                            <td><span class="badge badge-purple" style="background:#f3e8ff; color:#6b21a8; border:1px solid #e9d5ff; font-size:0.75rem; padding:0.2rem 0.5rem; border-radius:0.375rem;">@asig.Area</span></td>
                             <td>@asig.Grado</td>
                             <td style="text-align:center;">
                                 <span class="badge badge-blue">@asig.Creditos cr.</span>
@@ -217,7 +238,7 @@
             return;
         }
 
-        var result = Facade.RegistrarAsignatura(codigoLimpio, Form.Nombre.Trim(), Form.Area.Trim(), Form.IdDocente);
+        var result = Facade.RegistrarAsignatura(codigoLimpio, Form.Nombre.Trim(), Form.Area.Trim(), Form.IdDocente, Form.Creditos, Form.Grado.Trim());
         Exito    = result.Success;
         Mensaje  = result.Success ? "✅ Asignatura registrada exitosamente." : $"❌ {result.Message}";
         Cargando = false;
@@ -235,5 +256,7 @@
         public string Nombre { get; set; } = "";
         public string Area { get; set; } = "";
         public string IdDocente { get; set; } = "";
+        public int Creditos { get; set; } = 3;
+        public string Grado { get; set; } = "Primero";
     }
 }
