@@ -32,15 +32,17 @@
                     </div>
                     <div class="form-group">
                         <label class="form-label">ID / Cédula</label>
-                        <input class="form-control" @bind="Form.Id" placeholder="Ej. E009" />
+                        <input class="form-control" @bind="Form.Id" @bind:event="oninput" placeholder="Ej. E009" />
                     </div>
                     <div class="form-group">
                         <label class="form-label">Nombre Completo <span style="color:#94a3b8;font-size:0.75rem;">(solo letras)</span></label>
-                        <input class="form-control" @bind="Form.Nombre" placeholder="Ej. Andrea Gómez" />
+                        <input class="form-control" @bind="Form.Nombre" @bind:event="oninput" placeholder="Ej. Andrea Gómez" />
                     </div>
                     <div class="form-group">
                         <label class="form-label">Matrícula <span style="color:#94a3b8;font-size:0.75rem;">(MAT001 / POS001)</span></label>
-                        <input class="form-control" @bind="Form.Matricula" placeholder="Ej. MAT009" style="text-transform:uppercase;" />
+                        <input class="form-control" value="@Form.Matricula"
+                               @oninput="e => Form.Matricula = (e.Value?.ToString() ?? string.Empty).ToUpper()"
+                               placeholder="Ej. MAT009" style="text-transform:uppercase;" />
                     </div>
                     <div class="form-group">
                         <label class="form-label">Fecha de Nacimiento</label>
@@ -418,16 +420,21 @@
         Cargando = true;
         Mensaje  = "";
 
-        // ── Campos requeridos básicos ─────────────────────────
-        if (string.IsNullOrWhiteSpace(Form.Id)       ||
-            string.IsNullOrWhiteSpace(Form.Nombre)   ||
-            string.IsNullOrWhiteSpace(Form.Matricula)||
-            string.IsNullOrWhiteSpace(Form.Acudiente)||
-            string.IsNullOrWhiteSpace(Form.Programa))
-        {
-            Mensaje  = "❌ Completa todos los campos requeridos: ID, nombre, matrícula, acudiente y programa.";
-            Exito    = false; Cargando = false; return;
-        }
+        // ── Campos requeridos ─ validación individual para mensaje claro ────
+        if (string.IsNullOrWhiteSpace(Form.Id))
+        { Mensaje = "❌ Falta el campo ID / Cédula."; Exito = false; Cargando = false; return; }
+
+        if (string.IsNullOrWhiteSpace(Form.Nombre))
+        { Mensaje = "❌ Falta el Nombre Completo."; Exito = false; Cargando = false; return; }
+
+        if (string.IsNullOrWhiteSpace(Form.Matricula))
+        { Mensaje = "❌ Falta el campo Matrícula."; Exito = false; Cargando = false; return; }
+
+        if (string.IsNullOrWhiteSpace(Form.Acudiente))
+        { Mensaje = "❌ Falta el Nombre del Acudiente."; Exito = false; Cargando = false; return; }
+
+        if (string.IsNullOrWhiteSpace(Form.Programa))
+        { Mensaje = "❌ Falta el Programa / Especialidad."; Exito = false; Cargando = false; return; }
 
         // ── Reutilizar regex de solo letras ───────────────────
         var soloLetras = new System.Text.RegularExpressions.Regex(
