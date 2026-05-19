@@ -5,6 +5,7 @@ namespace SistemaAcademico.Interfaces
     public interface IEvaluacionService
     {
         Result<Evaluacion> ObtenerEvaluacion(string id);
+        Result<bool> EliminarEvaluacion(string id);
         Result<List<Evaluacion>> ObtenerEvaluacionesPorEstudiante(string idEstudiante);
         Result<List<Evaluacion>> ObtenerEvaluacionesPorAsignatura(string codigoAsignatura);
         Result<bool> RegistrarEvaluacion(Evaluacion evaluacion);

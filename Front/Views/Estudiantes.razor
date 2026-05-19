@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @inject AcademicoFacadeService Facade
 @using Front.Models
+@inject IJSRuntime JS
 
 <PageTitle>Estudiantes — Sistema Académico</PageTitle>
 
@@ -167,6 +168,7 @@
                             <td><span class="badge @GetBadgeEstado(est.Estado)">@est.Estado</span></td>
                             <td>
                                 <button class="btn btn-outline" style="padding:0.25rem 0.75rem; font-size:0.8rem;" @onclick="() => VerDetalle(est.Id)">Ver</button>
+                                <button class="btn" style="padding:0.25rem 0.75rem; font-size:0.8rem; background:#fee2e2; color:#ef4444; border:1px solid #fecaca; margin-left:0.5rem; border-radius:0.5rem;" @onclick="() => EliminarEstudiante(est.Id)">Eliminar</button>
                             </td>
                         </tr>
                     }
@@ -398,7 +400,22 @@
 
     protected override void OnInitialized()
     {
+        CargarEstudiantes();
+    }
+
+    private void CargarEstudiantes()
+    {
         ListaEstudiantes = Facade.ObtenerEstudiantes();
+    }
+
+    private async Task EliminarEstudiante(string id)
+    {
+        bool confirmado = await JS.InvokeAsync<bool>("confirm", $"¿Seguro que deseas eliminar al estudiante con ID {id}?");
+        if (confirmado)
+        {
+            Facade.EliminarEstudiante(id);
+            CargarEstudiantes();
+        }
     }
 
     private IEnumerable<EstudianteViewModel> EstudiantesFiltrados =>

@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @inject AcademicoFacadeService Facade
 @using Front.Models
+@inject IJSRuntime JS
 
 <PageTitle>Docentes — Sistema Académico</PageTitle>
 
@@ -104,8 +105,9 @@
                         </div>
                     }
 
-                    <div style="margin-top:1rem; padding-top:0.75rem; border-top:1px solid #f1f5f9; font-size:0.75rem; color:#94a3b8;">
-                        Emp. @doc.NumeroEmpleado
+                    <div style="margin-top:1rem; padding-top:0.75rem; border-top:1px solid #f1f5f9; display:flex; justify-content:space-between; align-items:center;">
+                        <span style="font-size:0.75rem; color:#94a3b8;">Emp. @doc.NumeroEmpleado</span>
+                        <button class="btn" style="padding:0.25rem 0.5rem; font-size:0.75rem; background:#fee2e2; color:#ef4444; border:1px solid #fecaca; border-radius:0.375rem;" @onclick="() => EliminarDocente(doc.Id)">Eliminar</button>
                     </div>
                 </div>
             }
@@ -136,7 +138,22 @@
 
     protected override void OnInitialized()
     {
+        CargarDocentes();
+    }
+
+    private void CargarDocentes()
+    {
         ListaDocentes = Facade.ObtenerDocentes();
+    }
+
+    private async Task EliminarDocente(string id)
+    {
+        bool confirmado = await JS.InvokeAsync<bool>("confirm", $"¿Seguro que deseas eliminar al docente con ID {id}?");
+        if (confirmado)
+        {
+            Facade.EliminarDocente(id);
+            CargarDocentes();
+        }
     }
 
     private void ToggleForm()

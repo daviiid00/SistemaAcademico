@@ -31,6 +31,22 @@ namespace SistemaAcademico.Services
             }
         }
 
+        public Result<bool> EliminarEvaluacion(string id)
+        {
+            try
+            {
+                var evaluacion = _evaluaciones.FirstOrDefault(e => e.Id == id);
+                if (evaluacion == null) return Result<bool>.Fail("Evaluación no encontrada", false);
+
+                _evaluaciones.Remove(evaluacion);
+                return Result<bool>.Ok(true, "Evaluación eliminada");
+            }
+            catch (Exception ex)
+            {
+                return Result<bool>.Fail($"Error al eliminar: {ex.Message}", false);
+            }
+        }
+
         public Result<List<Evaluacion>> ObtenerTodas()
         {
             try

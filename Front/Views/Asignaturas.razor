@@ -1,6 +1,8 @@
 @page "/asignaturas"
 @rendermode InteractiveServer
 @inject AcademicoFacadeService Facade
+@using Front.Models
+@inject IJSRuntime JS
 
 <PageTitle>Asignaturas — Sistema Académico</PageTitle>
 
@@ -81,6 +83,7 @@
                         <th>Grado</th>
                         <th>Créditos</th>
                         <th>Docentes</th>
+                        <th></th>
                     </tr>
                 </thead>
                 <tbody>
@@ -100,6 +103,9 @@
                                         <span class="badge badge-gray" style="font-size:0.65rem;">@nombre</span>
                                     }
                                 </div>
+                            </td>
+                            <td>
+                                <button class="btn" style="padding:0.25rem 0.5rem; font-size:0.75rem; background:#fee2e2; color:#ef4444; border:1px solid #fecaca; border-radius:0.375rem;" @onclick="() => EliminarAsignatura(asig.Codigo)">Eliminar</button>
                             </td>
                         </tr>
                     }
@@ -136,6 +142,16 @@
     {
         ListaAsignaturas = Facade.ObtenerAsignaturas();
         ListaDocentes = Facade.ObtenerDocentes();
+    }
+
+    private async Task EliminarAsignatura(string codigo)
+    {
+        bool confirmado = await JS.InvokeAsync<bool>("confirm", $"¿Seguro que deseas eliminar la asignatura con código {codigo}?");
+        if (confirmado)
+        {
+            Facade.EliminarAsignatura(codigo);
+            CargarDatos();
+        }
     }
 
     private void ToggleForm()

@@ -2,6 +2,7 @@
 @rendermode InteractiveServer
 @inject AcademicoFacadeService Facade
 @using Front.Models
+@inject IJSRuntime JS
 
 <PageTitle>Evaluaciones — Sistema Académico</PageTitle>
 
@@ -92,7 +93,7 @@
             <div class="table-container">
                 <table class="tabla-academica">
                     <thead>
-                        <tr><th>Estudiante</th><th>Asignatura</th><th>Período</th><th>Nota</th><th>Estado</th></tr>
+                        <tr><th>Estudiante</th><th>Asignatura</th><th>Período</th><th>Nota</th><th>Estado</th><th></th></tr>
                     </thead>
                     <tbody>
                         @foreach (var ev in EvaluacionesFiltradas)
@@ -106,6 +107,9 @@
                                     <span style="font-size:0.8rem; color:@GetColorNota(ev.NotaFinal);">
                                         @(ev.NotaFinal >= 3.0 ? "✔ Aprobado" : "✖ Reprobado")
                                     </span>
+                                </td>
+                                <td>
+                                    <button class="btn" style="padding:0.25rem 0.5rem; font-size:0.75rem; background:#fee2e2; color:#ef4444; border:1px solid #fecaca; border-radius:0.375rem;" @onclick="() => EliminarEvaluacion(ev.CodigoEval)">Eliminar</button>
                                 </td>
                             </tr>
                         }
@@ -283,6 +287,16 @@ else
         {
             ListaEvaluaciones = Facade.ObtenerEvaluaciones();
             LimpiarForm();
+        }
+    }
+
+    private async Task EliminarEvaluacion(string id)
+    {
+        bool confirmado = await JS.InvokeAsync<bool>("confirm", $"¿Seguro que deseas eliminar la evaluación con ID {id}?");
+        if (confirmado)
+        {
+            Facade.EliminarEvaluacion(id);
+            ListaEvaluaciones = Facade.ObtenerEvaluaciones();
         }
     }
 

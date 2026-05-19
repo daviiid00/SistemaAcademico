@@ -158,6 +158,13 @@ namespace Front.Services
             return vm;
         }
 
+        public Result<bool> EliminarEstudiante(string id)
+        {
+            // Eliminar evaluaciones del estudiante localmente para reflejar UI
+            _evalLocal.RemoveAll(e => e.Estudiante?.Id == id);
+            return _estudianteService.EliminarPersona(id);
+        }
+
         // ── Docentes ──────────────────────────────────────────────
 
         public List<DocenteViewModel> ObtenerDocentes()
@@ -202,6 +209,11 @@ namespace Front.Services
         public Result<bool> RegistrarDocente(string id, string nombre, string area)
             => RegistrarDocente(id, nombre, area, new DateTime(1980, 1, 1));
 
+        public Result<bool> EliminarDocente(string id)
+        {
+            return _docenteService.EliminarPersona(id);
+        }
+
         // ── Asignaturas ───────────────────────────────────────────
 
         public List<AsignaturaViewModel> ObtenerAsignaturas()
@@ -223,6 +235,11 @@ namespace Front.Services
             {
                 return Result<bool>.Fail($"Error: {ex.Message}", false);
             }
+        }
+
+        public Result<bool> EliminarAsignatura(string codigo)
+        {
+            return _asignaturaService.EliminarAsignatura(codigo);
         }
 
         // ── Evaluaciones ──────────────────────────────────────────
@@ -254,6 +271,17 @@ namespace Front.Services
             var res = _universidadService.RegistrarEvaluacion(ev);
             if (res.Success) _evalLocal.Add(ev);
             return res;
+        }
+
+        public Result<bool> EliminarEvaluacion(string id)
+        {
+            var eval = _evalLocal.FirstOrDefault(e => e.Id == id);
+            if (eval != null)
+            {
+                _evalLocal.Remove(eval);
+                _evaluacionService.EliminarEvaluacion(id);
+            }
+            return Result<bool>.Ok(true, "Evaluación eliminada");
         }
 
         public Result<bool> CancelarMateria(string idEstudiante, string codigoAsignatura, string motivo)

@@ -16,6 +16,16 @@ namespace SistemaAcademico.Services
                 _asignaturas.Add(asignatura);
         }
 
+        public Result<bool> EliminarAsignatura(string codigo)
+        {
+            var asignatura = _asignaturas.FirstOrDefault(a => a.Codigo == codigo);
+            if (asignatura == null)
+                return Result<bool>.Fail($"Asignatura con código {codigo} no encontrada", false);
+
+            _asignaturas.Remove(asignatura);
+            return Result<bool>.Ok(true, "Asignatura eliminada exitosamente");
+        }
+
         public List<Asignatura> ObtenerTodas() => new(_asignaturas);
 
         public Asignatura? ObtenerPorCodigo(string codigo)
