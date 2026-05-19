@@ -279,9 +279,9 @@ namespace Front.Services
             if (eval != null)
             {
                 _evalLocal.Remove(eval);
-                _evaluacionService.EliminarEvaluacion(id);
+                return _universidadService.EliminarEvaluacion(id);
             }
-            return Result<bool>.Ok(true, "Evaluación eliminada");
+            return Result<bool>.Fail("Evaluación no encontrada localmente", false);
         }
 
         public Result<bool> CancelarMateria(string idEstudiante, string codigoAsignatura, string motivo)

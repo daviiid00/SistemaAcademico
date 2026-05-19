@@ -73,6 +73,39 @@ namespace SistemaAcademico.Services
             }
         }
 
+        public Result<bool> EliminarEvaluacion(string id)
+        {
+            try
+            {
+                var evalRes = _evaluacionService.ObtenerEvaluacion(id);
+                if (!evalRes.Success || evalRes.Data == null)
+                    return Result<bool>.Fail("Evaluación no encontrada.", false);
+
+                var evaluacion = evalRes.Data;
+                var idEstudiante = evaluacion.Estudiante.Id;
+
+                // 1. Eliminar de EvaluacionService
+                var delRes = _evaluacionService.EliminarEvaluacion(id);
+                if (!delRes.Success) return delRes;
+
+                // 2. Eliminar de EstudianteService
+                _estudianteService.RemoverEvaluacionDeHistoria(idEstudiante, id);
+
+                // 3. Recalcular promedio y actualizar
+                var promedioResult = _evaluacionService.CalcularPromedioEstudiante(idEstudiante);
+                if (promedioResult.Success)
+                {
+                    _estudianteService.ActualizarPromedio(idEstudiante, promedioResult.Data);
+                }
+
+                return Result<bool>.Ok(true, "Evaluación eliminada correctamente.");
+            }
+            catch (Exception ex)
+            {
+                return Result<bool>.Fail($"Error al eliminar evaluación: {ex.Message}", false);
+            }
+        }
+
         // ── Cancelación de Materia ────────────────────────────────
 
         /// <summary>

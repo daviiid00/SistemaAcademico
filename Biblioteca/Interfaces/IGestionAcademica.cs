@@ -11,6 +11,7 @@ namespace SistemaAcademico.Interfaces
         Result<bool>                     RegistrarEvaluacion(Evaluacion evaluacion);
         Result<bool>                     CancelarMateria(CancelacionMateria cancelacion);
         Result<bool>                     GraduarEstudiante(string idEstudiante);
+        Result<bool>                     EliminarEvaluacion(string id);
         Result<List<Estudiante>>         ObtenerEstudiantesEnRiesgo();
         Result<List<EventoAcademicoBase>> AnalizarEvaluacionesConEventos();
     }

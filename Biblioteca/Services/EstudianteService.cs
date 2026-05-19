@@ -152,6 +152,30 @@ namespace SistemaAcademico.Services
             }
         }
 
+        public void RemoverEvaluacionDeHistoria(string idEstudiante, string idEvaluacion)
+        {
+            try
+            {
+                if (_historias.ContainsKey(idEstudiante))
+                {
+                    var historia = _historias[idEstudiante];
+                    var ev = historia.Evaluaciones.FirstOrDefault(e => e.Id == idEvaluacion);
+                    if (ev != null)
+                    {
+                        historia.Evaluaciones.Remove(ev);
+                    }
+                }
+                var evG = _evaluaciones.FirstOrDefault(e => e.Id == idEvaluacion);
+                if (evG != null)
+                {
+                    _evaluaciones.Remove(evG);
+                }
+            }
+            catch
+            {
+            }
+        }
+
         public List<Evaluacion> ObtenerEvaluacionesEstudiante(string idEstudiante)
         {
             try
