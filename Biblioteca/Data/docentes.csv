@@ -1,0 +1,6 @@
+Id,Nombre,FechaNacimiento,Email,Telefono,NumeroEmpleado,Departamento,Especialidad,Salario,Activo
+D001,Prof. Roberto Gómez,1975-03-15,roberto@universidad.edu,3101234560,EMP001,Sistemas,Programacion,5000000,true
+D002,Prof. Elena Torres,1980-06-20,elena@universidad.edu,3101234561,EMP002,Sistemas,BaseDatos,5200000,true
+D003,Prof. Miguel Hernandez,1978-09-10,miguel@universidad.edu,3101234562,EMP003,Redes,Telecomunicaciones,5100000,true
+D004,Prof. Lucia Moreno,1982-12-05,lucia@universidad.edu,3101234563,EMP004,Redes,Seguridad,5300000,false
+D005,Prof. Juan Castro,1979-04-18,juan@universidad.edu,3101234564,EMP005,Sistemas,Arquitectura,5150000,true

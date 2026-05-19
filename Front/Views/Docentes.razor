@@ -1,0 +1,189 @@
+@page "/docentes"
+@rendermode InteractiveServer
+@inject AcademicoFacadeService Facade
+@using Front.Models
+
+<PageTitle>Docentes — Sistema Académico</PageTitle>
+
+<div class="page-header">
+    <div class="container">
+        <nav class="breadcrumb-nav"><a href="/">Inicio</a><span>›</span><span>Docentes</span></nav>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h1 class="page-title">Docentes</h1>
+            <button class="btn btn-primary" @onclick="ToggleForm">@(MostrarFormulario ? "✕ Cancelar" : "+ Nuevo Docente")</button>
+        </div>
+        <p class="page-desc">Cuerpo docente universitario — títulos académicos y áreas de enseñanza.</p>
+    </div>
+</div>
+
+@if (MostrarFormulario)
+{
+    <section style="background:#eff6ff; border-bottom:1px solid #dbeafe; padding:2rem 0;">
+        <div class="container">
+            <div class="card card-glass" style="max-width:680px;">
+                <h3 style="font-size:1.25rem; font-weight:700; margin-bottom:1.5rem; color:#1e293b;">Registrar Nuevo Docente</h3>
+                <div class="cards-grid-2" style="gap:1rem;">
+                    <div class="form-group">
+                        <label class="form-label">ID / Empleado <span style="color:#94a3b8;font-size:0.75rem;">(DOC001)</span></label>
+                        <input class="form-control" @bind="Form.Id" placeholder="Ej. D009" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Nombre Completo <span style="color:#94a3b8;font-size:0.75rem;">(solo letras)</span></label>
+                        <input class="form-control" @bind="Form.Nombre" placeholder="Ej. Prof. Luis González" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fecha de Nacimiento</label>
+                        <input class="form-control" type="date" @bind="Form.FechaNacimiento" />
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label class="form-label">Área de Enseñanza</label>
+                        <input class="form-control" @bind="Form.Area" placeholder="Ej. Matemáticas, Sistemas, Física" />
+                    </div>
+                </div>
+                @if (!string.IsNullOrEmpty(Mensaje))
+                {
+                    <div class="@(Exito ? "toast success" : "toast error")" style="position:static; min-width:auto; margin:1rem 0;">@Mensaje</div>
+                }
+                <div style="display:flex; gap:1rem; margin-top:1.5rem;">
+                    <button class="btn btn-primary" @onclick="Registrar">
+                        @if (Cargando) { <span class="spinner"></span> }
+                        Registrar
+                    </button>
+                    <button class="btn btn-outline" @onclick="ToggleForm">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+<section class="section-sm bg-light">
+    <div class="container">
+        <div class="cards-grid">
+            @foreach (var (doc, i) in ListaDocentes.Select((d, i) => (d, i)))
+            {
+                <div class="card hover-lift animate-delay-@((i % 3) + 1)">
+                    <div class="d-flex align-center justify-between mb-4">
+                        <div class="doc-avatar">
+                            @doc.Nombre.Split(' ').First()[0]@(doc.Nombre.Split(' ').Length > 1 ? doc.Nombre.Split(' ').Last()[0].ToString() : "")
+                        </div>
+                        <span class="badge @doc.BadgeEstado">@(doc.Activo ? "Activo" : "Inactivo")</span>
+                    </div>
+
+                    <h4 style="font-size:1.05rem; font-weight:700; color:#1e293b; margin-bottom:0.2rem;">@doc.Nombre</h4>
+                    <p style="font-size:0.8rem; color:#1a56db; font-weight:600; margin-bottom:0.1rem;">@doc.Departamento</p>
+                    <p style="font-size:0.78rem; color:#94a3b8; margin-bottom:0.75rem;">
+                        @doc.Edad años · Área: @doc.Area
+                    </p>
+
+                    @if (doc.Titulos.Any())
+                    {
+                        <div class="titulos-list" style="margin-bottom:0.75rem;">
+                            <span class="titulos-label">Títulos académicos</span>
+                            @foreach (var titulo in doc.Titulos)
+                            {
+                                <div class="titulo-item">
+                                    <svg width="14" height="14" fill="none" viewBox="0 0 24 24" stroke="#1a56db">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+                                    </svg>
+                                    @titulo
+                                </div>
+                            }
+                        </div>
+                    }
+
+                    @if (doc.AsignaturasAsignadas.Any())
+                    {
+                        <div style="padding-top:0.6rem; border-top:1px solid #f1f5f9;">
+                            <span style="font-size:0.7rem; font-weight:700; color:#94a3b8; text-transform:uppercase; letter-spacing:0.07em; display:block; margin-bottom:0.4rem;">Asignaturas</span>
+                            <div style="display:flex; flex-wrap:wrap; gap:0.3rem;">
+                                @foreach (var asig in doc.AsignaturasAsignadas)
+                                {
+                                    <span style="background:#dbeafe; color:#1e40af; font-size:0.72rem; padding:0.15rem 0.5rem; border-radius:999px; font-weight:600;">@asig</span>
+                                }
+                            </div>
+                        </div>
+                    }
+
+                    <div style="margin-top:1rem; padding-top:0.75rem; border-top:1px solid #f1f5f9; font-size:0.75rem; color:#94a3b8;">
+                        Emp. @doc.NumeroEmpleado
+                    </div>
+                </div>
+            }
+        </div>
+    </div>
+</section>
+
+<style>
+    .page-header { background:white; padding:2.5rem 0 2rem; border-bottom:1px solid #f1f5f9; }
+    .page-title  { font-size:2.25rem; font-weight:800; color:#0f172a; margin:0.5rem 0 0.25rem; }
+    .page-desc   { color:#64748b; font-size:1rem; margin:0; }
+    .breadcrumb-nav { display:flex; align-items:center; gap:0.5rem; font-size:0.8rem; color:#94a3b8; margin-bottom:0.5rem; }
+    .breadcrumb-nav a { color:#1a56db; text-decoration:none; }
+    .doc-avatar { width:50px; height:50px; background:linear-gradient(135deg,#1a56db,#3b82f6); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:1rem; font-weight:800; }
+    .titulos-list { display:flex; flex-direction:column; gap:0.4rem; }
+    .titulos-label { font-size:0.7rem; font-weight:700; color:#94a3b8; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:0.3rem; display:block; }
+    .titulo-item { display:flex; align-items:flex-start; gap:0.5rem; font-size:0.8rem; color:#475569; line-height:1.5; }
+    .titulo-item svg { flex-shrink:0; margin-top:2px; }
+</style>
+
+@code {
+    private List<DocenteViewModel> ListaDocentes = new();
+    private bool   MostrarFormulario = false;
+    private bool   Cargando = false;
+    private bool   Exito    = false;
+    private string Mensaje  = "";
+    private NuevoDocenteForm Form = new();
+
+    protected override void OnInitialized()
+    {
+        ListaDocentes = Facade.ObtenerDocentes();
+    }
+
+    private void ToggleForm()
+    {
+        MostrarFormulario = !MostrarFormulario;
+        Mensaje = "";
+        Form    = new();
+    }
+
+    private void Registrar()
+    {
+        Cargando = true;
+        Mensaje  = "";
+
+        if (string.IsNullOrWhiteSpace(Form.Id) || string.IsNullOrWhiteSpace(Form.Nombre) || string.IsNullOrWhiteSpace(Form.Area))
+        {
+            Mensaje  = "❌ Completa todos los campos requeridos.";
+            Exito    = false;
+            Cargando = false;
+            return;
+        }
+
+        var soloLetras = new System.Text.RegularExpressions.Regex(@"[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]");
+
+        if (soloLetras.IsMatch(Form.Nombre.Trim()))
+        { Mensaje = "❌ El nombre solo puede contener letras y espacios."; Exito = false; Cargando = false; return; }
+
+        if (soloLetras.IsMatch(Form.Area.Trim()))
+        { Mensaje = "❌ El área solo puede contener letras y espacios."; Exito = false; Cargando = false; return; }
+
+        var result = Facade.RegistrarDocente(Form.Id, Form.Nombre, Form.Area, Form.FechaNacimiento);
+        Exito    = result.Success;
+        Mensaje  = result.Success ? "✅ Docente registrado exitosamente." : $"❌ {result.Message}";
+        Cargando = false;
+
+        if (result.Success)
+        {
+            ListaDocentes = Facade.ObtenerDocentes();
+            Form = new();
+        }
+    }
+
+    private class NuevoDocenteForm
+    {
+        public string   Id              { get; set; } = "";
+        public string   Nombre          { get; set; } = "";
+        public string   Area            { get; set; } = "";
+        public DateTime FechaNacimiento { get; set; } = new DateTime(1980, 1, 1);
+    }
+}

@@ -1,0 +1,22 @@
+@inherits LayoutComponentBase
+@inject NavigationManager Nav
+@inject IJSRuntime JS
+
+<!-- Layout principal del Sistema Académico -->
+<div class="app-wrapper">
+    <NavbarComponent />
+
+    <main class="main-content page-enter">
+        @Body
+    </main>
+
+    <FooterComponent />
+</div>
+
+@code {
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // Re-inicializar animaciones en cada navegación
+        await JS.InvokeVoidAsync("initReveal");
+    }
+}

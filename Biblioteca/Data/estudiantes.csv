@@ -1,0 +1,6 @@
+Tipo,Id,Nombre,FechaNacimiento,Email,Telefono,Matricula,FechaIngreso,Parametro1,Parametro2,Parametro3
+Pregrado,E001,Juan Perez,1995-05-15,juan@universidad.edu,3001234567,MAT001,2020-01-15,2,45,Ingenieria Sistemas
+Pregrado,E002,Maria Garcia,1996-03-20,maria@universidad.edu,3001234568,MAT002,2020-01-15,3,60,Ingenieria Sistemas
+Pregrado,E003,Carlos Martinez,1997-08-10,carlos@universidad.edu,3001234569,MAT003,2021-01-15,1,30,Ingenieria Industrial
+Posgrado,E004,Ana Lopez,1990-07-10,ana@universidad.edu,3001234570,MAT004,2022-01-15,Maestria Sistemas,2,true
+Posgrado,E005,Roberto Silva,1992-11-25,roberto@universidad.edu,3001234571,MAT005,2022-09-01,Maestria Redes,1,false

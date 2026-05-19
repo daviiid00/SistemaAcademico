@@ -1,0 +1,307 @@
+@page "/evaluaciones"
+@rendermode InteractiveServer
+@inject AcademicoFacadeService Facade
+@using Front.Models
+
+<PageTitle>Evaluaciones — Sistema Académico</PageTitle>
+
+<div class="page-header">
+    <div class="container">
+        <nav class="breadcrumb-nav"><a href="/">Inicio</a><span>›</span><span>Evaluaciones</span></nav>
+        <h1 class="page-title">Evaluaciones</h1>
+        <p class="page-desc">Registro y consulta de notas académicas.</p>
+    </div>
+</div>
+
+<!-- Selector de modo -->
+<section style="background:white; border-bottom:1px solid #f1f5f9; padding:0;">
+    <div class="container" style="display:flex; gap:0;">
+        <button class="tab-btn @(Modo == "Docente" ? "tab-active" : "")" @onclick='() => CambiarModo("Docente")'>
+            👨‍🏫 Vista Docente
+        </button>
+        <button class="tab-btn @(Modo == "Estudiante" ? "tab-active" : "")" @onclick='() => CambiarModo("Estudiante")'>
+            🎓 Vista Estudiante
+        </button>
+    </div>
+</section>
+
+@if (Modo == "Docente")
+{
+    <!-- PANEL DOCENTE: puede registrar notas -->
+    <section style="background:#eff6ff; border-bottom:1px solid #dbeafe; padding:1.5rem 0;">
+        <div class="container">
+            <div class="card card-glass" style="max-width:680px;">
+                <h3 style="font-size:1.15rem; font-weight:700; margin-bottom:1.25rem; color:#1e293b;">
+                    ✏️ Registrar Evaluación
+                </h3>
+                <div class="cards-grid-2" style="gap:1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Estudiante</label>
+                        <select class="form-control form-select" @bind="Form.IdEstudiante">
+                            <option value="">— Seleccionar —</option>
+                            @foreach (var e in ListaEstudiantes)
+                            {
+                                <option value="@e.Id">@e.Nombre (@e.Id)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Asignatura</label>
+                        <select class="form-control form-select" @bind="Form.CodigoAsignatura">
+                            <option value="">— Seleccionar —</option>
+                            @foreach (var a in ListaAsignaturas)
+                            {
+                                <option value="@a.Codigo">@a.Nombre (@a.Codigo)</option>
+                            }
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Nota <span style="color:#94a3b8;font-size:0.75rem;">(0.0 – 5.0)</span></label>
+                        <input class="form-control" type="number" min="0" max="5" step="0.1"
+                               @bind="Form.Nota" placeholder="Ej. 4.2" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Período</label>
+                        <input class="form-control" @bind="Form.Periodo" placeholder="Ej. 2026-1" />
+                    </div>
+                </div>
+                @if (!string.IsNullOrEmpty(Mensaje))
+                {
+                    <div class="@(Exito ? "toast success" : "toast error")" style="position:static; min-width:auto; margin:1rem 0;">@Mensaje</div>
+                }
+                <div style="display:flex; gap:1rem; margin-top:1.25rem;">
+                    <button class="btn btn-primary" @onclick="Registrar">
+                        @if (Cargando) { <span class="spinner"></span> }
+                        Guardar Nota
+                    </button>
+                    <button class="btn btn-outline" @onclick="LimpiarForm">Limpiar</button>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Tabla completa — Docente -->
+    <section class="section-sm bg-light">
+        <div class="container">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                <h3 style="font-size:1.1rem; font-weight:700; color:#1e293b; margin:0;">
+                    Todas las Evaluaciones <span style="color:#94a3b8; font-weight:400; font-size:0.9rem;">(@ListaEvaluaciones.Count)</span>
+                </h3>
+                <input class="form-control" style="max-width:240px; font-size:0.85rem;" placeholder="🔍 Buscar..." @bind="Busqueda" @bind:event="oninput" />
+            </div>
+            <div class="table-container">
+                <table class="tabla-academica">
+                    <thead>
+                        <tr><th>Estudiante</th><th>Asignatura</th><th>Período</th><th>Nota</th><th>Estado</th></tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var ev in EvaluacionesFiltradas)
+                        {
+                            <tr>
+                                <td style="font-weight:500;">@ev.NombreEstudiante</td>
+                                <td style="color:#64748b; font-size:0.85rem;">@ev.NombreAsignatura</td>
+                                <td style="color:#94a3b8; font-size:0.82rem;">@ev.Periodo</td>
+                                <td><span class="badge @ev.BadgeNota" style="font-weight:800; font-size:0.9rem;">@ev.TextoNota</span></td>
+                                <td>
+                                    <span style="font-size:0.8rem; color:@GetColorNota(ev.NotaFinal);">
+                                        @(ev.NotaFinal >= 3.0 ? "✔ Aprobado" : "✖ Reprobado")
+                                    </span>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </section>
+}
+else
+{
+    <!-- PANEL ESTUDIANTE: solo consulta (read-only) -->
+    <section style="background:#f0fdf4; border-bottom:1px solid #bbf7d0; padding:1.5rem 0;">
+        <div class="container">
+            <div class="card card-glass" style="max-width:480px;">
+                <h3 style="font-size:1.1rem; font-weight:700; margin-bottom:1rem; color:#1e293b;">
+                    🔍 Consultar mis notas
+                </h3>
+                <div class="form-group">
+                    <label class="form-label">Selecciona un Estudiante</label>
+                    <select class="form-control form-select" @bind="EstudianteConsulta" @bind:after="CargarNotasEstudiante">
+                        <option value="">— Seleccionar estudiante —</option>
+                        @foreach (var e in ListaEstudiantes)
+                        {
+                            <option value="@e.Id">@e.Nombre (@e.Tipo)</option>
+                        }
+                    </select>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    @if (!string.IsNullOrEmpty(EstudianteConsulta) && EstudianteVista != null)
+    {
+        <section class="section-sm bg-light">
+            <div class="container">
+                <!-- Tarjeta de promedio -->
+                <div class="card card-glass" style="max-width:680px; margin-bottom:1.5rem; padding:1.25rem;">
+                    <div style="display:flex; align-items:center; gap:1rem;">
+                        <div class="mini-avatar" style="width:52px; height:52px; font-size:1.3rem;">@EstudianteVista.Nombre[0]</div>
+                        <div>
+                            <p style="font-weight:700; font-size:1.05rem; color:#1e293b; margin:0;">@EstudianteVista.Nombre</p>
+                            <p style="font-size:0.82rem; color:#64748b; margin:0.2rem 0 0;">@EstudianteVista.Tipo — @EstudianteVista.ProgramaOEspecialidad</p>
+                        </div>
+                        <div style="margin-left:auto; text-align:right;">
+                            <div style="font-size:0.75rem; color:#94a3b8; text-transform:uppercase; letter-spacing:0.05em;">Promedio</div>
+                            <div style="font-size:2rem; font-weight:900; color:@GetColorNota(EstudianteVista.Promedio); line-height:1.1;">
+                                @EstudianteVista.Promedio.ToString("0.00")
+                            </div>
+                            <div style="font-size:0.78rem; color:@GetColorNota(EstudianteVista.Promedio);">
+                                @(EstudianteVista.Promedio >= 3.0 ? "✔ Aprobatorio" : "⚠ En riesgo")
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Tabla read-only -->
+                <div class="table-container">
+                    <table class="tabla-academica">
+                        <thead>
+                            <tr><th>Asignatura</th><th>Período</th><th>Nota</th><th>Estado</th></tr>
+                        </thead>
+                        <tbody>
+                            @if (EvaluacionesConsulta.Any())
+                            {
+                                @foreach (var ev in EvaluacionesConsulta)
+                                {
+                                    <tr>
+                                        <td style="font-weight:500;">@ev.NombreAsignatura</td>
+                                        <td style="color:#94a3b8; font-size:0.82rem;">@ev.Periodo</td>
+                                        <td><span class="badge @ev.BadgeNota" style="font-weight:800;">@ev.TextoNota</span></td>
+                                        <td>
+                                            <span style="font-size:0.8rem; color:@GetColorNota(ev.NotaFinal);">
+                                                @(ev.NotaFinal >= 3.0 ? "✔ Aprobado" : "✖ Reprobado")
+                                            </span>
+                                        </td>
+                                    </tr>
+                                }
+                            }
+                            else
+                            {
+                                <tr><td colspan="4" style="text-align:center; color:#94a3b8; font-style:italic; padding:2rem;">Sin evaluaciones registradas.</td></tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+
+                <p style="font-size:0.75rem; color:#94a3b8; margin-top:0.75rem; font-style:italic;">
+                    🔒 Vista de solo lectura — las notas son administradas por el docente.
+                </p>
+            </div>
+        </section>
+    }
+}
+
+<style>
+    .page-header { background:white; padding:2.5rem 0 1.5rem; border-bottom:1px solid #f1f5f9; }
+    .page-title  { font-size:2rem; font-weight:800; color:#0f172a; margin:0.5rem 0 0; }
+    .page-desc   { color:#64748b; font-size:0.95rem; margin:0.25rem 0 0; }
+    .breadcrumb-nav { display:flex; align-items:center; gap:0.5rem; font-size:0.8rem; color:#94a3b8; margin-bottom:0.25rem; }
+    .breadcrumb-nav a { color:#1a56db; text-decoration:none; }
+    .tab-btn { padding:0.875rem 2rem; border:none; background:transparent; font-size:0.9rem; font-weight:600; color:#64748b; cursor:pointer; border-bottom:3px solid transparent; transition:all 0.2s; }
+    .tab-btn:hover { color:#1a56db; background:#f8fafc; }
+    .tab-active { color:#1a56db !important; border-bottom:3px solid #1a56db !important; background:#eff6ff !important; }
+    .mini-avatar { width:38px; height:38px; background:linear-gradient(135deg,#1a56db,#3b82f6); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.95rem; font-weight:800; flex-shrink:0; }
+</style>
+
+@code {
+    private string Modo = "Docente";
+
+    private List<EstudianteViewModel>  ListaEstudiantes  = new();
+    private List<AsignaturaViewModel>  ListaAsignaturas  = new();
+    private List<EvaluacionViewModel>  ListaEvaluaciones = new();
+
+    private bool   Cargando = false;
+    private bool   Exito    = false;
+    private string Mensaje  = "";
+    private string Busqueda = "";
+    private NuevaEvaluacionForm Form = new();
+
+    // Panel estudiante
+    private string EstudianteConsulta = "";
+    private EstudianteViewModel? EstudianteVista;
+    private List<EvaluacionViewModel> EvaluacionesConsulta = new();
+
+    protected override void OnInitialized()
+    {
+        ListaEstudiantes  = Facade.ObtenerEstudiantes();
+        ListaAsignaturas  = Facade.ObtenerAsignaturas();
+        ListaEvaluaciones = Facade.ObtenerEvaluaciones();
+    }
+
+    private IEnumerable<EvaluacionViewModel> EvaluacionesFiltradas =>
+        string.IsNullOrEmpty(Busqueda)
+            ? ListaEvaluaciones
+            : ListaEvaluaciones.Where(e =>
+                e.NombreEstudiante.Contains(Busqueda, StringComparison.OrdinalIgnoreCase) ||
+                e.NombreAsignatura.Contains(Busqueda, StringComparison.OrdinalIgnoreCase));
+
+    private void CambiarModo(string modo)
+    {
+        Modo    = modo;
+        Mensaje = "";
+        EstudianteConsulta = "";
+        EstudianteVista = null;
+        EvaluacionesConsulta = new();
+    }
+
+    private void Registrar()
+    {
+        Cargando = true;
+        Mensaje  = "";
+
+        if (string.IsNullOrWhiteSpace(Form.IdEstudiante) || string.IsNullOrWhiteSpace(Form.CodigoAsignatura))
+        {
+            Mensaje  = "❌ Selecciona estudiante y asignatura.";
+            Exito    = false;
+            Cargando = false;
+            return;
+        }
+        if (Form.Nota < 0 || Form.Nota > 5)
+        {
+            Mensaje  = "❌ La nota debe estar entre 0.0 y 5.0.";
+            Exito    = false;
+            Cargando = false;
+            return;
+        }
+
+        var result = Facade.RegistrarEvaluacion(Form.IdEstudiante, Form.CodigoAsignatura, Form.Nota, Form.Periodo);
+        Exito    = result.Success;
+        Mensaje  = result.Success ? "✅ Nota registrada correctamente." : $"❌ {result.Message}";
+        Cargando = false;
+
+        if (result.Success)
+        {
+            ListaEvaluaciones = Facade.ObtenerEvaluaciones();
+            LimpiarForm();
+        }
+    }
+
+    private void LimpiarForm() => Form = new();
+
+    private void CargarNotasEstudiante()
+    {
+        if (string.IsNullOrEmpty(EstudianteConsulta)) return;
+        EstudianteVista       = Facade.ObtenerEstudiantePorId(EstudianteConsulta);
+        EvaluacionesConsulta  = Facade.ObtenerEvaluacionesPorEstudiante(EstudianteConsulta);
+    }
+
+    private string GetColorNota(double n) => n >= 4.0 ? "#10b981" : n >= 3.0 ? "#f59e0b" : "#ef4444";
+
+    private class NuevaEvaluacionForm
+    {
+        public string IdEstudiante     { get; set; } = "";
+        public string CodigoAsignatura { get; set; } = "";
+        public double Nota             { get; set; } = 3.5;
+        public string Periodo          { get; set; } = "2026-1";
+    }
+}

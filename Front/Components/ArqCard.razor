@@ -1,0 +1,48 @@
+<!-- Tarjeta de arquitectura — fondo oscuro -->
+<div class="arq-card reveal animate-delay-@Delay">
+    <div class="arq-icono">@Icono</div>
+    <h4>@Titulo</h4>
+    <p>@Desc</p>
+</div>
+
+<style>
+    .arq-card {
+        background: rgba(255,255,255,0.04);
+        border: 1px solid rgba(255,255,255,0.08);
+        border-radius: 1rem;
+        padding: 2rem;
+        transition: all 0.3s ease;
+    }
+
+    .arq-card:hover {
+        background: rgba(26,86,219,0.12);
+        border-color: rgba(26,86,219,0.3);
+        transform: translateY(-4px);
+    }
+
+    .arq-icono {
+        font-size: 2rem;
+        margin-bottom: 1rem;
+    }
+
+    .arq-card h4 {
+        font-size: 1rem;
+        font-weight: 700;
+        color: white;
+        margin-bottom: 0.5rem;
+    }
+
+    .arq-card p {
+        font-size: 0.875rem;
+        color: #64748b;
+        line-height: 1.7;
+        margin: 0;
+    }
+</style>
+
+@code {
+    [Parameter] public string Titulo { get; set; } = "";
+    [Parameter] public string Desc   { get; set; } = "";
+    [Parameter] public string Icono  { get; set; } = "⭐";
+    [Parameter] public int    Delay  { get; set; } = 1;
+}

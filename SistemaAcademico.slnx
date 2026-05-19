@@ -1,0 +1,6 @@
+<Solution>
+  <Folder Name="/Biblioteca/">
+    <Project Path="Biblioteca/SistemaAcademico.csproj" />
+  </Folder>
+  <Project Path="Front/Front.csproj" />
+</Solution>

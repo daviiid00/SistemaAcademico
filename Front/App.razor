@@ -1,0 +1,73 @@
+@namespace Front
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="description" content="Sistema Académico Universitario — Gestión moderna de estudiantes, docentes, asignaturas y evaluaciones." />
+    <base href="/" />
+    <ResourcePreloader />
+
+    <!-- Google Fonts: Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+    <!-- Estilos globales del sistema -->
+    <link rel="stylesheet" href="css/app.css" />
+    <link rel="stylesheet" href="css/navbar-hero.css" />
+    <link rel="stylesheet" href="css/animations.css" />
+    <link rel="stylesheet" href="Front.styles.css" />
+
+    <ImportMap />
+    <link rel="icon" type="image/png" href="favicon.png" />
+    <HeadOutlet />
+</head>
+
+<body>
+    <Routes />
+    <ReconnectModal />
+    <script src="_framework/blazor.web.js"></script>
+    <!-- Script de animaciones scroll reveal -->
+    <script>
+        // Scroll Reveal con IntersectionObserver
+        document.addEventListener('DOMContentLoaded', () => {
+            const revealEls = document.querySelectorAll('.reveal, .reveal-left, .reveal-right');
+            const observer = new IntersectionObserver((entries) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        entry.target.classList.add('visible');
+                        observer.unobserve(entry.target);
+                    }
+                });
+            }, { threshold: 0.15 });
+            revealEls.forEach(el => observer.observe(el));
+
+            // Navbar scroll effect
+            const navbar = document.querySelector('.navbar');
+            window.addEventListener('scroll', () => {
+                if (window.scrollY > 20) navbar?.classList.add('scrolled');
+                else navbar?.classList.remove('scrolled');
+            });
+        });
+
+        // Re-aplicar tras navegación Blazor
+        window.initReveal = () => {
+            setTimeout(() => {
+                const revealEls = document.querySelectorAll('.reveal:not(.visible), .reveal-left:not(.visible), .reveal-right:not(.visible)');
+                const observer = new IntersectionObserver((entries) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            entry.target.classList.add('visible');
+                            observer.unobserve(entry.target);
+                        }
+                    });
+                }, { threshold: 0.15 });
+                revealEls.forEach(el => observer.observe(el));
+            }, 100);
+        };
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,635 @@
+@page "/estudiantes"
+@rendermode InteractiveServer
+@inject AcademicoFacadeService Facade
+@using Front.Models
+
+<PageTitle>Estudiantes — Sistema Académico</PageTitle>
+
+<div class="page-header">
+    <div class="container">
+        <nav class="breadcrumb-nav"><a href="/">Inicio</a><span>›</span><span>Estudiantes</span></nav>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h1 class="page-title">Estudiantes</h1>
+            <button class="btn btn-primary" @onclick="ToggleForm">@(MostrarFormulario ? "✕ Cancelar" : "+ Nuevo Estudiante")</button>
+        </div>
+        <p class="page-desc">Gestión de estudiantes de pregrado y posgrado.</p>
+    </div>
+</div>
+
+@if (MostrarFormulario)
+{
+    <section style="background:#eff6ff; border-bottom:1px solid #dbeafe; padding:2rem 0;">
+        <div class="container">
+            <div class="card card-glass" style="max-width:720px;">
+                <h3 style="font-size:1.25rem; font-weight:700; margin-bottom:1.5rem; color:#1e293b;">Registrar Nuevo Estudiante</h3>
+                <div class="cards-grid-2" style="gap:1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Tipo</label>
+                        <select class="form-control form-select" @bind="Form.Tipo">
+                            <option value="Pregrado">Pregrado</option>
+                            <option value="Posgrado">Posgrado</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">ID / Cédula</label>
+                        <input class="form-control" @bind="Form.Id" placeholder="Ej. E009" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Nombre Completo <span style="color:#94a3b8;font-size:0.75rem;">(solo letras)</span></label>
+                        <input class="form-control" @bind="Form.Nombre" placeholder="Ej. Andrea Gómez" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Matrícula <span style="color:#94a3b8;font-size:0.75rem;">(MAT001 / POS001)</span></label>
+                        <input class="form-control" @bind="Form.Matricula" placeholder="Ej. MAT009" style="text-transform:uppercase;" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Fecha de Nacimiento</label>
+                        <input class="form-control" type="date" @bind="Form.FechaNacimiento" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Nombre Acudiente</label>
+                        <input class="form-control" @bind="Form.Acudiente" placeholder="Acudiente" />
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label class="form-label">Programa / Especialidad</label>
+                        <input class="form-control" @bind="Form.Programa" placeholder="Ingeniería de Sistemas / Maestría en Software" />
+                    </div>
+                </div>
+
+                @if (Form.Tipo == "Pregrado")
+                {
+                    <div style="margin-top:1rem; padding:1rem; background:#f0fdf4; border-radius:0.5rem; border:1px solid #bbf7d0;">
+                        <p style="font-size:0.78rem; font-weight:700; color:#166534; margin:0 0 0.75rem; text-transform:uppercase; letter-spacing:0.05em;">🎓 Bachillerato <span style="color:#ef4444;">*</span></p>
+                        <div class="cards-grid-2" style="gap:0.75rem;">
+                            <div class="form-group">
+                                <label class="form-label">Colegio</label>
+                                <input class="form-control" @bind="Form.Colegio" placeholder="Nombre del colegio" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Año Graduación</label>
+                                <input class="form-control" type="number" min="1990" max="2026" @bind="Form.AñoBachillerato" />
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label">Título Diploma</label>
+                                <input class="form-control" @bind="Form.TituloDiploma" placeholder="Ej. Bachiller Académico" />
+                            </div>
+                        </div>
+                    </div>
+                }
+                else
+                {
+                    <div style="margin-top:1rem; padding:1rem; background:#faf5ff; border-radius:0.5rem; border:1px solid #d8b4fe;">
+                        <p style="font-size:0.78rem; font-weight:700; color:#6b21a8; margin:0 0 0.75rem; text-transform:uppercase; letter-spacing:0.05em;">📚 Estudio Previo <span style="color:#ef4444;">*</span></p>
+                        <div class="cards-grid-2" style="gap:0.75rem;">
+                            <div class="form-group">
+                                <label class="form-label">Institución</label>
+                                <input class="form-control" @bind="Form.InstitucionPrevia" placeholder="Universidad de origen" />
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Año Graduación</label>
+                                <input class="form-control" type="number" min="1990" max="2026" @bind="Form.AñoGradPrevio" />
+                            </div>
+                            <div class="form-group" style="grid-column: span 2;">
+                                <label class="form-label">Título Obtenido</label>
+                                <input class="form-control" @bind="Form.TituloObtenido" placeholder="Ej. Ingeniero de Sistemas" />
+                            </div>
+                        </div>
+                    </div>
+                }
+
+                @if (!string.IsNullOrEmpty(Mensaje))
+                {
+                    <div class="@(Exito ? "toast success" : "toast error")" style="position:static; min-width:auto; margin:1rem 0;">@Mensaje</div>
+                }
+                <div style="display:flex; gap:1rem; margin-top:1.5rem;">
+                    <button class="btn btn-primary" @onclick="Registrar">
+                        @if (Cargando) { <span class="spinner"></span> }
+                        Registrar
+                    </button>
+                    <button class="btn btn-outline" @onclick="ToggleForm">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+<!-- Buscador -->
+<section style="background:white; padding:1.25rem 0; border-bottom:1px solid #f1f5f9;">
+    <div class="container" style="display:flex; gap:1rem; align-items:center;">
+        <input class="form-control" style="max-width:320px;" placeholder="🔍 Buscar por nombre o matrícula..."
+               @bind="Busqueda" @bind:event="oninput" />
+        <select class="form-control form-select" style="max-width:160px;" @bind="FiltroTipo">
+            <option value="">Todos</option>
+            <option value="Pregrado">Pregrado</option>
+            <option value="Posgrado">Posgrado</option>
+        </select>
+        <span style="font-size:0.85rem; color:#64748b;">@EstudiantesFiltrados.Count() resultado(s)</span>
+    </div>
+</section>
+
+<!-- Tabla de Estudiantes -->
+<section class="section-sm bg-light">
+    <div class="container">
+        <div class="table-container">
+            <table class="tabla-academica">
+                <thead>
+                    <tr>
+                        <th>Estudiante</th>
+                        <th>Tipo</th>
+                        <th>Matrícula</th>
+                        <th>Programa</th>
+                        <th>Promedio</th>
+                        <th>Estado</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var est in EstudiantesFiltrados)
+                    {
+                        <tr>
+                            <td>
+                                <div style="display:flex; align-items:center; gap:0.75rem;">
+                                    <div class="mini-avatar">@est.Nombre[0]</div>
+                                    <div>
+                                        <div style="font-weight:600; color:#1e293b;">@est.Nombre</div>
+                                        <div style="font-size:0.75rem; color:#94a3b8;">@est.Id</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td><span class="badge @est.BadgeClase">@est.Tipo</span></td>
+                            <td style="font-family:monospace; font-size:0.85rem;">@est.Matricula</td>
+                            <td style="font-size:0.85rem; color:#64748b;">@est.ProgramaOEspecialidad</td>
+                            <td>
+                                <span style="font-weight:700; color:@GetColorPromedio(est.Promedio);">@est.Promedio.ToString("0.00")</span>
+                            </td>
+                            <td><span class="badge @GetBadgeEstado(est.Estado)">@est.Estado</span></td>
+                            <td>
+                                <button class="btn btn-outline" style="padding:0.25rem 0.75rem; font-size:0.8rem;" @onclick="() => VerDetalle(est.Id)">Ver</button>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<!-- Modal de Detalle -->
+@if (EstudianteSeleccionado != null)
+{
+    <div style="position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.65); display:flex; justify-content:center; align-items:flex-start; padding-top:3vh; z-index:100;">
+        <div style="width:94%; max-width:700px; max-height:94vh; display:flex; flex-direction:column; background:white; border-radius:1rem; box-shadow:0 25px 60px rgba(0,0,0,0.35);">
+
+            <!-- Cabecera fija (no scrollea) -->
+            <div style="display:flex; align-items:center; gap:1rem; padding:1.25rem 1.5rem; border-bottom:1px solid #f1f5f9; flex-shrink:0;">
+                <div class="mini-avatar" style="width:46px; height:46px; font-size:1.2rem; flex-shrink:0;">@EstudianteSeleccionado.Nombre[0]</div>
+                <div style="flex:1; min-width:0;">
+                    <h3 style="font-size:1.15rem; font-weight:800; color:#1e293b; margin:0; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">@EstudianteSeleccionado.Nombre</h3>
+                    <div style="margin-top:0.25rem; display:flex; gap:0.4rem; flex-wrap:wrap;">
+                        <span class="badge @EstudianteSeleccionado.BadgeClase">@EstudianteSeleccionado.Tipo</span>
+                        <span class="badge @GetBadgeEstado(EstudianteSeleccionado.Estado)">@EstudianteSeleccionado.Estado</span>
+                    </div>
+                </div>
+                <button style="flex-shrink:0; background:#f1f5f9; border:none; border-radius:50%; width:36px; height:36px; cursor:pointer; font-size:1.1rem; color:#64748b; display:flex; align-items:center; justify-content:center; transition:background 0.2s;" @onclick="CerrarDetalle" title="Cerrar">×</button>
+            </div>
+
+            <!-- Cuerpo scrolleable -->
+            <div style="overflow-y:auto; padding:1.25rem 1.5rem; flex:1;">
+
+            <!-- Datos generales -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:0.6rem; background:#f8fafc; padding:1rem; border-radius:0.5rem; margin-bottom:1.25rem; font-size:0.85rem;">
+                <div><span style="color:#94a3b8;">ID:</span> <strong>@EstudianteSeleccionado.Id</strong></div>
+                <div><span style="color:#94a3b8;">Matrícula:</span> <strong>@EstudianteSeleccionado.Matricula</strong></div>
+                <div><span style="color:#94a3b8;">Nacimiento:</span> <strong>@EstudianteSeleccionado.FechaNac.ToString("dd/MM/yyyy")</strong></div>
+                <div><span style="color:#94a3b8;">Edad:</span> <strong>@EstudianteSeleccionado.Edad años</strong></div>
+                <div><span style="color:#94a3b8;">Acudiente:</span> <strong>@EstudianteSeleccionado.Acudiente</strong></div>
+                <div><span style="color:#94a3b8;">Programa:</span> <strong>@EstudianteSeleccionado.ProgramaOEspecialidad</strong></div>
+                <div style="grid-column: span 2;">
+                    <span style="color:#94a3b8;">Promedio:</span>
+                    <strong style="font-size:1.1rem; color:@GetColorPromedio(EstudianteSeleccionado.Promedio);">
+                        @EstudianteSeleccionado.Promedio.ToString("0.00")
+                    </strong>
+                    <span style="font-size:0.75rem; color:#64748b; margin-left:0.4rem;">
+                        @(EstudianteSeleccionado.Promedio >= 3.0 ? "✔ Aprobatorio" : "⚠ En riesgo")
+                    </span>
+                </div>
+            </div>
+
+            <!-- Bachillerato (Pregrado) -->
+            @if (EstudianteSeleccionado.Tipo == "Pregrado" && !string.IsNullOrWhiteSpace(EstudianteSeleccionado.ColegioEgresado))
+            {
+                <div style="background:#f0fdf4; padding:0.875rem; border-radius:0.5rem; margin-bottom:1.25rem; border:1px solid #bbf7d0;">
+                    <p style="font-size:0.75rem; font-weight:700; color:#166534; margin:0 0 0.5rem; text-transform:uppercase;">🎓 Bachillerato</p>
+                    <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:0.5rem; font-size:0.82rem;">
+                        <div><span style="color:#64748b;">Colegio:</span><br /><strong>@EstudianteSeleccionado.ColegioEgresado</strong></div>
+                        <div><span style="color:#64748b;">Año:</span><br /><strong>@EstudianteSeleccionado.AñoGraduacionBachillerato</strong></div>
+                        <div><span style="color:#64748b;">Título:</span><br /><strong>@EstudianteSeleccionado.TituloDiploma</strong></div>
+                    </div>
+                </div>
+            }
+
+            <!-- Estudios Previos (Posgrado) -->
+            @if (EstudianteSeleccionado.Tipo == "Posgrado" && EstudianteSeleccionado.EstudiosPrevios.Any())
+            {
+                <div style="background:#faf5ff; padding:0.875rem; border-radius:0.5rem; margin-bottom:1.25rem; border:1px solid #d8b4fe;">
+                    <p style="font-size:0.75rem; font-weight:700; color:#6b21a8; margin:0 0 0.5rem; text-transform:uppercase;">📚 Estudios Previos</p>
+                    @foreach (var ep in EstudianteSeleccionado.EstudiosPrevios)
+                    {
+                        <div style="font-size:0.82rem; padding:0.35rem 0; border-bottom:1px dashed #e9d5ff;">
+                            <strong>@ep.TituloObtenido</strong> — @ep.Institucion (@ep.AñoGraduacion)
+                        </div>
+                    }
+                </div>
+            }
+
+            <!-- Requisito de Grado -->
+            <div style="background:#0f172a; padding:1rem; border-radius:0.5rem; margin-bottom:1.25rem;">
+                <p style="font-size:0.72rem; font-weight:700; color:#94a3b8; margin:0 0 0.5rem; text-transform:uppercase; letter-spacing:0.06em;">🏅 Requisito de Grado</p>
+                <pre style="font-family:monospace; font-size:0.82rem; color:#a5b4fc; margin:0; white-space:pre-wrap; line-height:1.6;">@RequisitosGradoTexto</pre>
+            </div>
+
+            <!-- Formulario: Requisito de Grado Pregrado -->
+            @if (EstudianteSeleccionado.Tipo == "Pregrado")
+            {
+                <div style="background:#f0fdf4; padding:0.875rem; border-radius:0.5rem; margin-bottom:1.25rem; border:1px solid #bbf7d0;">
+                    <p style="font-size:0.75rem; font-weight:700; color:#166534; margin:0 0 0.6rem; text-transform:uppercase;">✏️ Registrar Requisito de Grado</p>
+                    <div class="cards-grid-2" style="gap:0.6rem;">
+                        <div class="form-group">
+                            <label class="form-label" style="font-size:0.8rem;">Tipo</label>
+                            <select class="form-control form-select" @bind="FormPractica.Tipo">
+                                <option value="">— Seleccionar —</option>
+                                <option value="Práctica Empresarial">Práctica Empresarial</option>
+                                <option value="Pasantía Investigativa">Pasantía Investigativa</option>
+                                <option value="Plan de Negocios">Plan de Negocios</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="font-size:0.8rem;">Monitor / Tutor</label>
+                            <input class="form-control" @bind="FormPractica.Monitor" placeholder="Nombre del monitor" />
+                        </div>
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label class="form-label" style="font-size:0.8rem;">Nota (0.0 – 5.0)</label>
+                            <input class="form-control" type="number" min="0" max="5" step="0.1" @bind="FormPractica.Nota" />
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" style="margin-top:0.75rem; font-size:0.82rem; padding:0.4rem 1rem;" @onclick="GuardarPractica">💾 Guardar</button>
+                </div>
+            }
+
+            <!-- Formulario: Tesis Posgrado -->
+            @if (EstudianteSeleccionado.Tipo == "Posgrado")
+            {
+                <div style="background:#faf5ff; padding:0.875rem; border-radius:0.5rem; margin-bottom:1.25rem; border:1px solid #d8b4fe;">
+                    <p style="font-size:0.75rem; font-weight:700; color:#6b21a8; margin:0 0 0.6rem; text-transform:uppercase;">✏️ Registrar Tesis</p>
+                    <div class="cards-grid-2" style="gap:0.6rem;">
+                        <div class="form-group" style="grid-column: span 2;">
+                            <label class="form-label" style="font-size:0.8rem;">Título de la Tesis</label>
+                            <input class="form-control" @bind="FormTesis.Titulo" placeholder="Título de la tesis" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="font-size:0.8rem;">Director</label>
+                            <input class="form-control" @bind="FormTesis.Director" placeholder="Nombre del director" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="font-size:0.8rem;">Evaluador 1</label>
+                            <input class="form-control" @bind="FormTesis.Evaluador1" placeholder="Nombre evaluador 1" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="font-size:0.8rem;">Evaluador 2</label>
+                            <input class="form-control" @bind="FormTesis.Evaluador2" placeholder="Nombre evaluador 2" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="font-size:0.8rem;">Nota Cualitativa</label>
+                            <select class="form-control form-select" @bind="FormTesis.Nota">
+                                <option value="">— Seleccionar —</option>
+                                <option value="Aprobó">Aprobó</option>
+                                <option value="No aprobó">No aprobó</option>
+                                <option value="Laureada">Laureada 🏆</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label" style="font-size:0.8rem;">Fecha Sustentación</label>
+                            <input class="form-control" type="date" @bind="FormTesis.Fecha" />
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" style="margin-top:0.75rem; font-size:0.82rem; padding:0.4rem 1rem; background:linear-gradient(135deg,#7c3aed,#a855f7);" @onclick="GuardarTesis">💾 Guardar Tesis</button>
+                </div>
+            }
+
+            <!-- Historia Académica -->
+            <h4 style="font-size:0.9rem; font-weight:700; margin-bottom:0.75rem; color:#1e293b;">📊 Historia Académica</h4>
+            @if (EvaluacionesEstudiante.Any())
+            {
+                <div class="table-container" style="margin-bottom:1.25rem;">
+                    <table class="tabla-academica">
+                        <thead><tr><th>Asignatura</th><th>Período</th><th>Nota</th><th>Estado</th><th></th></tr></thead>
+                        <tbody>
+                            @foreach (var ev in EvaluacionesEstudiante)
+                            {
+                                <tr>
+                                    <td style="font-weight:500;">@ev.NombreAsignatura</td>
+                                    <td style="color:#94a3b8; font-size:0.8rem;">@ev.Periodo</td>
+                                    <td><span class="badge @ev.BadgeNota" style="font-weight:800;">@ev.TextoNota</span></td>
+                                    <td>
+                                        <span style="font-size:0.75rem; color:@GetColorPromedio(ev.NotaFinal);">
+                                            @(ev.NotaFinal >= 3.0 ? "✔ Aprobado" : "✖ Reprobado")
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <button class="btn btn-outline" style="color:#ef4444; border-color:#fca5a5; padding:0.15rem 0.5rem; font-size:0.72rem;" @onclick="() => CancelarMateria(ev)">
+                                            Cancelar
+                                        </button>
+                                    </td>
+                                </tr>
+                            }
+                        </tbody>
+                    </table>
+                </div>
+            }
+            else
+            {
+                <p style="color:#94a3b8; font-size:0.85rem; font-style:italic; margin-bottom:1rem;">Sin evaluaciones registradas.</p>
+            }
+
+            @if (!string.IsNullOrEmpty(MensajeModal))
+            {
+                <div class="@(ExitoModal ? "toast success" : "toast error")" style="position:static; min-width:auto; margin-bottom:1rem;">@MensajeModal</div>
+            }
+
+            <div style="margin-top:1rem; display:flex; justify-content:flex-end;">
+                <button class="btn btn-primary" @onclick="SimularGraduacion">🎓 Graduar Estudiante</button>
+            </div>
+            </div>
+        </div>
+    </div>
+}
+
+<style>
+    .page-header { background:white; padding:2.5rem 0 1.5rem; border-bottom:1px solid #f1f5f9; }
+    .page-title  { font-size:2rem; font-weight:800; color:#0f172a; margin:0.5rem 0 0; }
+    .page-desc   { color:#64748b; font-size:0.95rem; margin:0.25rem 0 0; }
+    .breadcrumb-nav { display:flex; align-items:center; gap:0.5rem; font-size:0.8rem; color:#94a3b8; margin-bottom:0.25rem; }
+    .breadcrumb-nav a { color:#1a56db; text-decoration:none; }
+    .mini-avatar { width:38px; height:38px; background:linear-gradient(135deg,#1a56db,#3b82f6); color:white; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.95rem; font-weight:800; flex-shrink:0; }
+    .badge-yellow { background:#fef3c7; color:#92400e; }
+</style>
+
+@code {
+    private List<EstudianteViewModel> ListaEstudiantes = new();
+    private string Busqueda  = "";
+    private string FiltroTipo = "";
+    private bool MostrarFormulario = false;
+    private bool Cargando = false;
+    private bool Exito    = false;
+    private string Mensaje = "";
+    private NuevoEstudianteForm Form = new();
+
+    // Modal
+    private EstudianteViewModel? EstudianteSeleccionado;
+    private string RequisitosGradoTexto = "";
+    private List<EvaluacionViewModel> EvaluacionesEstudiante = new();
+    private string MensajeModal = "";
+    private bool   ExitoModal   = false;
+    // Formularios en el modal
+    private PracticaForm  FormPractica = new();
+    private TesisForm     FormTesis    = new();
+
+    protected override void OnInitialized()
+    {
+        ListaEstudiantes = Facade.ObtenerEstudiantes();
+    }
+
+    private IEnumerable<EstudianteViewModel> EstudiantesFiltrados =>
+        ListaEstudiantes.Where(e =>
+            (string.IsNullOrEmpty(Busqueda) ||
+             e.Nombre.Contains(Busqueda, StringComparison.OrdinalIgnoreCase) ||
+             e.Matricula.Contains(Busqueda, StringComparison.OrdinalIgnoreCase)) &&
+            (string.IsNullOrEmpty(FiltroTipo) || e.Tipo == FiltroTipo));
+
+    private void ToggleForm()
+    {
+        MostrarFormulario = !MostrarFormulario;
+        Mensaje = "";
+        Form = new();
+    }
+
+    private void Registrar()
+    {
+        Cargando = true;
+        Mensaje  = "";
+
+        // ── Campos requeridos básicos ─────────────────────────
+        if (string.IsNullOrWhiteSpace(Form.Id)       ||
+            string.IsNullOrWhiteSpace(Form.Nombre)   ||
+            string.IsNullOrWhiteSpace(Form.Matricula)||
+            string.IsNullOrWhiteSpace(Form.Acudiente)||
+            string.IsNullOrWhiteSpace(Form.Programa))
+        {
+            Mensaje  = "❌ Completa todos los campos requeridos: ID, nombre, matrícula, acudiente y programa.";
+            Exito    = false; Cargando = false; return;
+        }
+
+        // ── Reutilizar regex de solo letras ───────────────────
+        var soloLetras = new System.Text.RegularExpressions.Regex(
+            @"[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]");
+
+        // Nombre
+        if (soloLetras.IsMatch(Form.Nombre.Trim()))
+        { Mensaje = "❌ El nombre solo puede contener letras y espacios."; Exito = false; Cargando = false; return; }
+
+        // Acudiente
+        if (soloLetras.IsMatch(Form.Acudiente.Trim()))
+        { Mensaje = "❌ El nombre del acudiente solo puede contener letras y espacios."; Exito = false; Cargando = false; return; }
+
+        // Programa
+        if (soloLetras.IsMatch(Form.Programa.Trim()))
+        { Mensaje = "❌ El programa/especialidad solo puede contener letras y espacios."; Exito = false; Cargando = false; return; }
+
+        // ── Matrícula: formato MAT001 ─────────────────────────
+        if (!System.Text.RegularExpressions.Regex.IsMatch(Form.Matricula.Trim(), @"^[A-Z]+\d+$"))
+        { Mensaje = "❌ La matrícula debe ser letras mayúsculas + números (ej. MAT001, POS001)."; Exito = false; Cargando = false; return; }
+
+        // ── Bachillerato obligatorio (Pregrado) ───────────────
+        if (Form.Tipo == "Pregrado" && (string.IsNullOrWhiteSpace(Form.Colegio) || Form.AñoBachillerato < 1990))
+        { Mensaje = "❌ Completa los datos de Bachillerato (colegio y año son obligatorios)."; Exito = false; Cargando = false; return; }
+
+        if (Form.Tipo == "Pregrado" && !string.IsNullOrWhiteSpace(Form.Colegio) && soloLetras.IsMatch(Form.Colegio.Trim()))
+        { Mensaje = "❌ El nombre del colegio solo puede contener letras y espacios."; Exito = false; Cargando = false; return; }
+
+        if (Form.Tipo == "Pregrado" && !string.IsNullOrWhiteSpace(Form.TituloDiploma) && soloLetras.IsMatch(Form.TituloDiploma.Trim()))
+        { Mensaje = "❌ El título del diploma solo puede contener letras y espacios."; Exito = false; Cargando = false; return; }
+
+        // ── Estudio previo obligatorio (Posgrado) ─────────────
+        if (Form.Tipo == "Posgrado" && (string.IsNullOrWhiteSpace(Form.InstitucionPrevia) || Form.AñoGradPrevio < 1990))
+        { Mensaje = "❌ Completa los datos del Estudio Previo (institución y año son obligatorios)."; Exito = false; Cargando = false; return; }
+
+        if (Form.Tipo == "Posgrado" && !string.IsNullOrWhiteSpace(Form.InstitucionPrevia) && soloLetras.IsMatch(Form.InstitucionPrevia.Trim()))
+        { Mensaje = "❌ El nombre de la institución solo puede contener letras y espacios."; Exito = false; Cargando = false; return; }
+
+        if (Form.Tipo == "Posgrado" && !string.IsNullOrWhiteSpace(Form.TituloObtenido) && soloLetras.IsMatch(Form.TituloObtenido.Trim()))
+        { Mensaje = "❌ El título obtenido solo puede contener letras y espacios."; Exito = false; Cargando = false; return; }
+
+
+        var result = Facade.RegistrarEstudiante(
+            Form.Tipo, Form.Id, Form.Nombre, Form.Acudiente, Form.Programa,
+            Form.FechaNacimiento, Form.Matricula,
+            Form.Colegio, Form.AñoBachillerato, Form.TituloDiploma,
+            Form.InstitucionPrevia, Form.TituloObtenido, Form.AñoGradPrevio);
+
+        Exito    = result.Success;
+        Mensaje  = result.Success ? "✅ Estudiante registrado exitosamente." : $"❌ {result.Message}";
+        Cargando = false;
+
+        if (result.Success)
+        {
+            ListaEstudiantes = Facade.ObtenerEstudiantes();
+            Form = new();
+        }
+    }
+
+    private void VerDetalle(string id)
+    {
+        MensajeModal           = "";
+        FormPractica           = new();
+        FormTesis              = new();
+        EstudianteSeleccionado = Facade.ObtenerEstudiantePorId(id);
+        if (EstudianteSeleccionado != null)
+        {
+            RequisitosGradoTexto   = Facade.ObtenerRequisitosGrado(id);
+            EvaluacionesEstudiante = Facade.ObtenerEvaluacionesPorEstudiante(id);
+        }
+    }
+
+    private void CerrarDetalle() => EstudianteSeleccionado = null;
+
+    private void SimularGraduacion()
+    {
+        if (EstudianteSeleccionado == null) return;
+        MensajeModal = "";
+        var res = Facade.GraduarEstudiante(EstudianteSeleccionado.Id);
+        ExitoModal   = res.Success;
+        MensajeModal = res.Success ? $"✅ {res.Message}" : $"❌ {res.Message}";
+        if (res.Success)
+        {
+            ListaEstudiantes = Facade.ObtenerEstudiantes();
+            EstudianteSeleccionado = Facade.ObtenerEstudiantePorId(EstudianteSeleccionado.Id);
+        }
+    }
+
+    private void CancelarMateria(EvaluacionViewModel ev)
+    {
+        if (EstudianteSeleccionado == null) return;
+        var res = Facade.CancelarMateria(EstudianteSeleccionado.Id, ev.CodigoAsignatura, "Carga académica alta");
+        ExitoModal   = res.Success;
+        MensajeModal = res.Success
+            ? $"✅ Materia '{ev.NombreAsignatura}' cancelada."
+            : $"❌ {res.Message}";
+        if (res.Success)
+        {
+            EvaluacionesEstudiante = Facade.ObtenerEvaluacionesPorEstudiante(EstudianteSeleccionado.Id);
+            EstudianteSeleccionado = Facade.ObtenerEstudiantePorId(EstudianteSeleccionado.Id);
+        }
+    }
+
+    private void GuardarPractica()
+    {
+        if (EstudianteSeleccionado == null) return;
+        if (string.IsNullOrWhiteSpace(FormPractica.Tipo) || string.IsNullOrWhiteSpace(FormPractica.Monitor))
+        {
+            MensajeModal = "❌ Selecciona el tipo y completa el monitor."; ExitoModal = false; return;
+        }
+        // Solo letras en el monitor
+        if (System.Text.RegularExpressions.Regex.IsMatch(FormPractica.Monitor.Trim(), @"[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]"))
+        {
+            MensajeModal = "❌ El nombre del monitor solo puede contener letras."; ExitoModal = false; return;
+        }
+        var res = Facade.RegistrarRequisitosGradoPregrado(
+            EstudianteSeleccionado.Id, FormPractica.Tipo, FormPractica.Monitor, FormPractica.Nota);
+        ExitoModal   = res.Success;
+        MensajeModal = res.Success ? $"✅ {res.Message}" : $"❌ {res.Message}";
+        if (res.Success)
+        {
+            RequisitosGradoTexto = Facade.ObtenerRequisitosGrado(EstudianteSeleccionado.Id);
+            FormPractica = new();
+        }
+    }
+
+    private void GuardarTesis()
+    {
+        if (EstudianteSeleccionado == null) return;
+        if (string.IsNullOrWhiteSpace(FormTesis.Titulo) || string.IsNullOrWhiteSpace(FormTesis.Director) ||
+            string.IsNullOrWhiteSpace(FormTesis.Nota))
+        {
+            MensajeModal = "❌ Completa título, director y nota cualitativa."; ExitoModal = false; return;
+        }
+        // Solo letras en Director y Evaluadores
+        var soloLetras = new System.Text.RegularExpressions.Regex(@"[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]");
+        if (soloLetras.IsMatch(FormTesis.Director.Trim()))
+        {
+            MensajeModal = "❌ El nombre del director solo puede contener letras."; ExitoModal = false; return;
+        }
+        if (!string.IsNullOrWhiteSpace(FormTesis.Evaluador1) && soloLetras.IsMatch(FormTesis.Evaluador1.Trim()))
+        {
+            MensajeModal = "❌ El nombre del Evaluador 1 solo puede contener letras."; ExitoModal = false; return;
+        }
+        if (!string.IsNullOrWhiteSpace(FormTesis.Evaluador2) && soloLetras.IsMatch(FormTesis.Evaluador2.Trim()))
+        {
+            MensajeModal = "❌ El nombre del Evaluador 2 solo puede contener letras."; ExitoModal = false; return;
+        }
+        var res = Facade.RegistrarTesisPosgrado(
+            EstudianteSeleccionado.Id, FormTesis.Titulo, FormTesis.Director,
+            FormTesis.Evaluador1, FormTesis.Evaluador2, FormTesis.Nota, FormTesis.Fecha);
+        ExitoModal   = res.Success;
+        MensajeModal = res.Success ? $"✅ {res.Message}" : $"❌ {res.Message}";
+        if (res.Success)
+        {
+            RequisitosGradoTexto   = Facade.ObtenerRequisitosGrado(EstudianteSeleccionado.Id);
+            EstudianteSeleccionado = Facade.ObtenerEstudiantePorId(EstudianteSeleccionado.Id);
+            FormTesis = new();
+        }
+    }
+
+    private string GetColorPromedio(double p) => p >= 4.0 ? "#10b981" : p >= 3.0 ? "#f59e0b" : "#ef4444";
+
+    private string GetBadgeEstado(string estado) => estado switch
+    {
+        "Activo"    => "badge-green",
+        "En Riesgo" => "badge-yellow",
+        "Graduado"  => "badge-blue",
+        _           => "badge-gray"
+    };
+
+    private class PracticaForm
+    {
+        public string Tipo    { get; set; } = "";
+        public string Monitor { get; set; } = "";
+        public double Nota    { get; set; } = 4.0;
+    }
+
+    private class TesisForm
+    {
+        public string   Titulo     { get; set; } = "";
+        public string   Director   { get; set; } = "";
+        public string   Evaluador1 { get; set; } = "";
+        public string   Evaluador2 { get; set; } = "";
+        public string   Nota       { get; set; } = "";
+        public DateTime Fecha      { get; set; } = DateTime.Today;
+    }
+
+    private class NuevoEstudianteForm
+    {
+        public string   Tipo              { get; set; } = "Pregrado";
+        public string   Id                { get; set; } = "";
+        public string   Nombre            { get; set; } = "";
+        public string   Acudiente         { get; set; } = "";
+        public string   Programa          { get; set; } = "";
+        public string   Matricula         { get; set; } = "";
+        public DateTime FechaNacimiento   { get; set; } = new DateTime(2000, 1, 1);
+        public string   Colegio           { get; set; } = "";
+        public int      AñoBachillerato   { get; set; } = 2018;
+        public string   TituloDiploma     { get; set; } = "";
+        public string   InstitucionPrevia { get; set; } = "";
+        public string   TituloObtenido    { get; set; } = "";
+        public int      AñoGradPrevio     { get; set; } = 2020;
+    }
+}

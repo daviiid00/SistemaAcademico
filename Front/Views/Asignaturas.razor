@@ -1,0 +1,223 @@
+@page "/asignaturas"
+@rendermode InteractiveServer
+@inject AcademicoFacadeService Facade
+
+<PageTitle>Asignaturas — Sistema Académico</PageTitle>
+
+<div class="page-header">
+    <div class="container">
+        <nav class="breadcrumb-nav">
+            <a href="/">Inicio</a><span>›</span><span>Asignaturas</span>
+        </nav>
+        <h1 class="page-title">Asignaturas</h1>
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <p class="page-desc ">Catálogo de materias por grado con sus docentes asignados.</p>
+            <button class="btn btn-primary" @onclick="ToggleForm">
+                @(MostrarFormulario ? "✕ Cancelar" : "+ Nueva Asignatura")
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Formulario Nueva Asignatura -->
+@if (MostrarFormulario)
+{
+    <section style="background:#eff6ff; border-bottom:1px solid #dbeafe; padding:2rem 0;">
+        <div class="container">
+            <div class="card card-glass" style="max-width:680px;">
+                <h3 style="font-size:1.25rem; font-weight:700; margin-bottom:1.5rem; color:#1e293b;">
+                    Registrar Nueva Asignatura
+                </h3>
+                <div class="cards-grid-2" style="gap:1rem;">
+                    <div class="form-group">
+                        <label class="form-label">Código <span style="color:#94a3b8;font-size:0.75rem;">(letras+números, ej. CS105)</span></label>
+                        <input class="form-control" @bind="Form.Codigo" placeholder="Ej. CS105" style="text-transform:uppercase;" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Área <span style="color:#94a3b8;font-size:0.75rem;">(solo letras)</span></label>
+                        <input class="form-control" @bind="Form.Area" placeholder="Ej. Sistemas" />
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label class="form-label">Nombre de Asignatura <span style="color:#94a3b8;font-size:0.75rem;">(solo letras)</span></label>
+                        <input class="form-control" @bind="Form.Nombre" placeholder="Ej. Lenguajes Formales" />
+                    </div>
+                    <div class="form-group" style="grid-column: span 2;">
+                        <label class="form-label">Docente Principal</label>
+                        <select class="form-control form-select" @bind="Form.IdDocente">
+                            <option value="">-- Seleccionar Docente --</option>
+                            @foreach (var doc in ListaDocentes)
+                            {
+                                <option value="@doc.Id">@doc.Nombre (@doc.Departamento)</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                @if (!string.IsNullOrEmpty(Mensaje))
+                {
+                    <div class="toast @(Exito ? "success" : "error")" style="position:static; min-width:auto; margin-bottom:1rem; margin-top:1rem;">
+                        @Mensaje
+                    </div>
+                }
+                <div style="display:flex; gap:1rem; margin-top:1.5rem;">
+                    <button class="btn btn-primary" @onclick="Registrar">
+                        @if (Cargando) { <span class="spinner"></span> }
+                        Registrar
+                    </button>
+                    <button class="btn btn-outline" @onclick="ToggleForm">Cancelar</button>
+                </div>
+            </div>
+        </div>
+    </section>
+}
+
+<section class="section-sm bg-light">
+    <div class="container">
+        <div class="table-container">
+            <table class="tabla-academica">
+                <thead>
+                    <tr>
+                        <th>Código</th>
+                        <th>Nombre</th>
+                        <th>Grado</th>
+                        <th>Créditos</th>
+                        <th>Docentes</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach (var asig in ListaAsignaturas)
+                    {
+                        <tr>
+                            <td><span class="badge badge-gray">@asig.Codigo</span></td>
+                            <td style="font-weight:600; color:#1e293b;">@asig.Nombre</td>
+                            <td>@asig.Grado</td>
+                            <td style="text-align:center;">
+                                <span class="badge badge-blue">@asig.Creditos cr.</span>
+                            </td>
+                            <td>
+                                <div style="display:flex; gap:0.4rem; flex-wrap:wrap;">
+                                    @foreach (var nombre in asig.NombresDocentes)
+                                    {
+                                        <span class="badge badge-gray" style="font-size:0.65rem;">@nombre</span>
+                                    }
+                                </div>
+                            </td>
+                        </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+    </div>
+</section>
+
+<style>
+    .page-header { background:white; padding:2.5rem 0 2rem; border-bottom:1px solid #f1f5f9; }
+    .page-title  { font-size:2.25rem; font-weight:800; color:#0f172a; margin:0.5rem 0 0.25rem; }
+    .page-desc   { color:#64748b; font-size:1rem; margin:0; }
+    .breadcrumb-nav { display:flex; align-items:center; gap:0.5rem; font-size:0.8rem; color:#94a3b8; margin-bottom:0.5rem; }
+    .breadcrumb-nav a { color:#1a56db; text-decoration:none; }
+</style>
+
+@code {
+    private List<AsignaturaViewModel> ListaAsignaturas = new();
+    private List<DocenteViewModel> ListaDocentes = new();
+    
+    private bool MostrarFormulario = false;
+    private bool Cargando = false;
+    private bool Exito = false;
+    private string Mensaje = "";
+    private NuevaAsignaturaForm Form = new();
+
+    protected override void OnInitialized()
+    {
+        CargarDatos();
+    }
+
+    private void CargarDatos()
+    {
+        ListaAsignaturas = Facade.ObtenerAsignaturas();
+        ListaDocentes = Facade.ObtenerDocentes();
+    }
+
+    private void ToggleForm()
+    {
+        MostrarFormulario = !MostrarFormulario;
+        Mensaje = "";
+        Form = new();
+    }
+
+    private void Registrar()
+    {
+        Cargando = true;
+        Mensaje  = "";
+
+        // Campos requeridos
+        if (string.IsNullOrWhiteSpace(Form.Codigo) ||
+            string.IsNullOrWhiteSpace(Form.Nombre)  ||
+            string.IsNullOrWhiteSpace(Form.Area)    ||
+            string.IsNullOrWhiteSpace(Form.IdDocente))
+        {
+            Mensaje  = "❌ Completa todos los campos: código, nombre, área y docente.";
+            Exito    = false;
+            Cargando = false;
+            return;
+        }
+
+        // Código: letras mayúsculas + números (CS101, MA201)
+        var codigoLimpio = Form.Codigo.Trim().ToUpper();
+        if (!System.Text.RegularExpressions.Regex.IsMatch(codigoLimpio, @"^[A-Z]+\d+$"))
+        {
+            Mensaje  = "❌ El código debe ser letras mayúsculas seguidas de números (ej. CS101, MA201).";
+            Exito    = false;
+            Cargando = false;
+            return;
+        }
+
+        // Nombre: solo letras, espacios y tildes
+        if (System.Text.RegularExpressions.Regex.IsMatch(Form.Nombre.Trim(), @"[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]"))
+        {
+            Mensaje  = "❌ El nombre de la asignatura solo puede contener letras y espacios.";
+            Exito    = false;
+            Cargando = false;
+            return;
+        }
+
+        // Área: solo letras, espacios y tildes
+        if (System.Text.RegularExpressions.Regex.IsMatch(Form.Area.Trim(), @"[^a-zA-ZáéíóúÁÉÍÓÚüÜñÑ\s]"))
+        {
+            Mensaje  = "❌ El área solo puede contener letras y espacios.";
+            Exito    = false;
+            Cargando = false;
+            return;
+        }
+
+        // Código duplicado
+        var asigExistente = ListaAsignaturas.Any(a =>
+            string.Equals(a.Codigo, codigoLimpio, StringComparison.OrdinalIgnoreCase));
+        if (asigExistente)
+        {
+            Mensaje  = $"❌ Ya existe una asignatura con el código '{codigoLimpio}'.";
+            Exito    = false;
+            Cargando = false;
+            return;
+        }
+
+        var result = Facade.RegistrarAsignatura(codigoLimpio, Form.Nombre.Trim(), Form.Area.Trim(), Form.IdDocente);
+        Exito    = result.Success;
+        Mensaje  = result.Success ? "✅ Asignatura registrada exitosamente." : $"❌ {result.Message}";
+        Cargando = false;
+
+        if (result.Success)
+        {
+            CargarDatos();
+            Form = new();
+        }
+    }
+
+    private class NuevaAsignaturaForm
+    {
+        public string Codigo { get; set; } = "";
+        public string Nombre { get; set; } = "";
+        public string Area { get; set; } = "";
+        public string IdDocente { get; set; } = "";
+    }
+}

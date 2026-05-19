@@ -1,0 +1,221 @@
+@page "/operaciones"
+@rendermode InteractiveServer
+@inject AcademicoFacadeService Facade
+@using Front.Models
+
+<PageTitle>Operaciones — Sistema Académico</PageTitle>
+
+<div class="page-header">
+    <div class="container">
+        <nav class="breadcrumb-nav"><a href="/">Inicio</a><span>›</span><span>Operaciones</span></nav>
+        <h1 class="page-title">Operaciones Universitarias</h1>
+        <p class="page-desc">Análisis de permanencia, reportes globales y log de eventos académicos (Observer).</p>
+    </div>
+</div>
+
+<section class="section" style="background:#f8fafc;">
+    <div class="container">
+        <div style="display:grid; grid-template-columns:1fr 2fr; gap:2rem; align-items:start;">
+
+            <!-- Panel Izquierdo: Acciones -->
+            <div style="display:flex; flex-direction:column; gap:1.25rem;">
+
+                <!-- Análisis Permanencia -->
+                <div class="card card-glass">
+                    <h3 style="font-size:1.05rem; font-weight:700; margin-bottom:0.75rem; color:#1e293b;">🔍 Análisis Permanencia</h3>
+                    <p style="font-size:0.85rem; color:#64748b; margin-bottom:1rem; line-height:1.5;">
+                        Detecta estudiantes en riesgo y dispara <code>EventoAlertaPermanencia</code>.
+                    </p>
+                    <button class="btn btn-primary" style="width:100%; justify-content:center;" @onclick="EjecutarAnalisis">
+                        @if (Analizando) { <span class="spinner"></span> }
+                        ▶ Ejecutar Análisis
+                    </button>
+                    @if (AnalisisCompletado)
+                    {
+                        <div style="margin-top:1rem; padding:0.875rem; background:#eff6ff; border-radius:0.5rem; border:1px solid #bfdbfe; font-size:0.85rem;">
+                            <strong style="color:#1e40af;">@EstudiantesEnRiesgo.Count estudiante(s) en riesgo</strong>
+                            @foreach (var e in EstudiantesEnRiesgo)
+                            {
+                                <div style="color:#64748b; margin-top:0.3rem;">⚠ @e.Nombre (Prom: @e.Promedio.ToString("0.00"))</div>
+                            }
+                        </div>
+                    }
+                </div>
+
+                <!-- Análisis con Eventos Observer -->
+                <div class="card card-glass">
+                    <h3 style="font-size:1.05rem; font-weight:700; margin-bottom:0.75rem; color:#1e293b;">📡 Alertas con Observer</h3>
+                    <p style="font-size:0.85rem; color:#64748b; margin-bottom:1rem; line-height:1.5;">
+                        Genera <code>EventoAlertaConOportunidad</code> y <code>EventoAlertaSinOportunidad</code> por cada evaluación reprobada.
+                    </p>
+                    <button class="btn btn-primary" style="width:100%; justify-content:center; background:linear-gradient(135deg,#7c3aed,#a855f7);" @onclick="EjecutarAnalisisConEventos">
+                        @if (AnalizandoEventos) { <span class="spinner"></span> }
+                        📡 Disparar Alertas
+                    </button>
+                    @if (!string.IsNullOrEmpty(MensajeEventos))
+                    {
+                        <div style="margin-top:1rem; padding:0.75rem; background:#faf5ff; border-radius:0.5rem; border:1px solid #d8b4fe; font-size:0.83rem; color:#6b21a8;">
+                            @MensajeEventos
+                        </div>
+                    }
+                </div>
+
+                <!-- Reporte Global -->
+                @if (Reporte != null)
+                {
+                    <div class="card card-glass">
+                        <h3 style="font-size:1.05rem; font-weight:700; margin-bottom:1rem; color:#1e293b;">📈 Reporte Global</h3>
+                        <div style="display:flex; flex-direction:column; gap:0.6rem; font-size:0.85rem;">
+                            <div class="stat-row"><span>Promedio general</span><strong style="color:#1a56db;">@Reporte.PromedioGeneralUniversidad.ToString("0.00")</strong></div>
+                            <div class="stat-row"><span>Eval. aprobadas</span><strong style="color:#10b981;">@Reporte.EvaluacionesAprobadas ✔</strong></div>
+                            <div class="stat-row"><span>Eval. reprobadas</span><strong style="color:#ef4444;">@Reporte.EvaluacionesReprobadas ✖</strong></div>
+                            <div class="stat-row"><span>Est. aprobados</span><strong style="color:#10b981;">@Reporte.EstudiantesAprobados</strong></div>
+                            <div class="stat-row"><span>Est. en riesgo</span><strong style="color:#ef4444;">@Reporte.EstudiantesEnRiesgoCount</strong></div>
+                            <div class="stat-row"><span>Asig. más perdida</span><strong style="color:#f59e0b; font-size:0.78rem;">@Reporte.AsignaturaMasPerdida</strong></div>
+                            <div class="stat-row"><span>Mejor desempeño</span><strong style="color:#10b981; font-size:0.78rem;">@Reporte.AsignaturaMejorPromedio</strong></div>
+                        </div>
+                    </div>
+                }
+            </div>
+
+            <!-- Panel Derecho: Log de Eventos -->
+            <div class="card card-glass" style="min-height:420px;">
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:1rem;">
+                    <h3 style="font-size:1.1rem; font-weight:700; color:#1e293b; margin:0;">
+                        📋 Log de Eventos Académicos
+                        <span style="font-size:0.8rem; font-weight:400; color:#94a3b8; margin-left:0.5rem;">(@HistorialEventos.Count)</span>
+                    </h3>
+                    <button class="btn btn-outline" style="font-size:0.78rem; padding:0.3rem 0.75rem;" @onclick="RefrescarLog">↻ Refrescar</button>
+                </div>
+
+                @if (HistorialEventos.Any())
+                {
+                    <div style="display:flex; flex-direction:column; gap:0.5rem; max-height:480px; overflow-y:auto;">
+                        @foreach (var ev in HistorialEventos.OrderByDescending(e => e.FechaOcurrencia))
+                        {
+                            <div style="padding:0.75rem 0.875rem; border-radius:0.5rem; border-left:4px solid @GetColorEvento(ev.ObtenerTipo()); background:@GetBgEvento(ev.ObtenerTipo()); font-size:0.82rem;">
+                                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:0.2rem;">
+                                    <span style="font-weight:700; color:@GetColorEvento(ev.ObtenerTipo());">@GetIconoEvento(ev.ObtenerTipo()) @ev.ObtenerTipo()</span>
+                                    <span style="color:#94a3b8; font-size:0.75rem;">@ev.FechaOcurrencia.ToString("dd/MM HH:mm")</span>
+                                </div>
+                                <p style="color:#475569; margin:0; line-height:1.45;">@ev.GenerarResumen()</p>
+                                @if (ev.EsCritico())
+                                {
+                                    <span style="font-size:0.7rem; font-weight:700; color:#dc2626; background:#fee2e2; padding:0.1rem 0.4rem; border-radius:4px; margin-top:0.3rem; display:inline-block;">🔴 CRÍTICO</span>
+                                }
+                            </div>
+                        }
+                    </div>
+                }
+                else
+                {
+                    <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:200px; color:#94a3b8;">
+                        <div style="font-size:2.5rem; margin-bottom:0.75rem;">📭</div>
+                        <p style="font-size:0.9rem; margin:0;">No hay eventos registrados aún.</p>
+                        <p style="font-size:0.8rem; margin:0.3rem 0 0;">Ejecuta un análisis para generar eventos.</p>
+                    </div>
+                }
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    .page-header  { background:white; padding:2.5rem 0 2rem; border-bottom:1px solid #f1f5f9; }
+    .page-title   { font-size:2.25rem; font-weight:800; color:#0f172a; margin:0.5rem 0 0.25rem; }
+    .page-desc    { color:#64748b; font-size:1rem; margin:0; }
+    .breadcrumb-nav { display:flex; align-items:center; gap:0.5rem; font-size:0.8rem; color:#94a3b8; margin-bottom:0.5rem; }
+    .breadcrumb-nav a { color:#1a56db; text-decoration:none; }
+    .stat-row     { display:flex; justify-content:space-between; padding:0.35rem 0; border-bottom:1px solid #f1f5f9; }
+    .stat-row:last-child { border-bottom:none; }
+    code          { background:#f1f5f9; padding:0.1rem 0.35rem; border-radius:3px; font-size:0.8rem; color:#7c3aed; }
+</style>
+
+@code {
+    private bool Analizando        = false;
+    private bool AnalizandoEventos = false;
+    private bool AnalisisCompletado = false;
+
+    private List<SistemaAcademico.Domain.Models.Estudiante> EstudiantesEnRiesgo = new();
+    private List<SistemaAcademico.Domain.Models.EventoAcademicoBase> HistorialEventos = new();
+    private ReporteAcademicoViewModel? Reporte;
+    private string MensajeEventos = "";
+
+    protected override void OnInitialized()
+    {
+        Reporte          = Facade.GenerarReporteGlobal();
+        HistorialEventos = Facade.ObtenerHistorialEventos();
+    }
+
+    private void EjecutarAnalisis()
+    {
+        Analizando = true;
+        var res = Facade.EjecutarAnalisisPermanencia();
+        EstudiantesEnRiesgo = res.Success ? res.Data : new();
+        AnalisisCompletado  = true;
+        Analizando          = false;
+        Reporte             = Facade.GenerarReporteGlobal();
+        HistorialEventos    = Facade.ObtenerHistorialEventos();
+    }
+
+    private void EjecutarAnalisisConEventos()
+    {
+        AnalizandoEventos = true;
+        MensajeEventos    = "";
+        var res = Facade.EjecutarAnalisisConEventos();
+        AnalizandoEventos = false;
+
+        if (res.Success)
+        {
+            int con    = res.Data.Count(e => e is SistemaAcademico.Domain.Models.EventoAlertaConOportunidad);
+            int sin    = res.Data.Count(e => e is SistemaAcademico.Domain.Models.EventoAlertaSinOportunidad);
+            MensajeEventos = $"✅ {res.Data.Count} evento(s) generado(s): {con} con oportunidad, {sin} sin oportunidad.";
+        }
+        else
+        {
+            MensajeEventos = $"❌ {res.Message}";
+        }
+
+        Reporte          = Facade.GenerarReporteGlobal();
+        HistorialEventos = Facade.ObtenerHistorialEventos();
+    }
+
+    private void RefrescarLog()
+    {
+        HistorialEventos = Facade.ObtenerHistorialEventos();
+        Reporte          = Facade.GenerarReporteGlobal();
+    }
+
+    private string GetColorEvento(string tipo) => tipo switch
+    {
+        "Evaluacion Registrada"   => "#1a56db",
+        "Alerta Con Oportunidad"  => "#f59e0b",
+        "Alerta Sin Oportunidad"  => "#ef4444",
+        "Cancelacion de Materia"  => "#ea580c",
+        "Alerta de Permanencia"   => "#7c3aed",
+        "Grado Aprobado"          => "#10b981",
+        _                         => "#64748b"
+    };
+
+    private string GetBgEvento(string tipo) => tipo switch
+    {
+        "Evaluacion Registrada"   => "#eff6ff",
+        "Alerta Con Oportunidad"  => "#fffbeb",
+        "Alerta Sin Oportunidad"  => "#fef2f2",
+        "Cancelacion de Materia"  => "#fff7ed",
+        "Alerta de Permanencia"   => "#faf5ff",
+        "Grado Aprobado"          => "#f0fdf4",
+        _                         => "#f8fafc"
+    };
+
+    private string GetIconoEvento(string tipo) => tipo switch
+    {
+        "Evaluacion Registrada"   => "📝",
+        "Alerta Con Oportunidad"  => "⚠️",
+        "Alerta Sin Oportunidad"  => "🚨",
+        "Cancelacion de Materia"  => "🚫",
+        "Alerta de Permanencia"   => "📊",
+        "Grado Aprobado"          => "🎓",
+        _                         => "📌"
+    };
+}
